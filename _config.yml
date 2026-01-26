@@ -38,6 +38,8 @@ launch_buttons:
   notebook_interface: "classic"
 
 sphinx:
+  extra_extensions:
+    - sphinx_exercise
   config:
     html_theme_options:
       navigation_with_keys: false
