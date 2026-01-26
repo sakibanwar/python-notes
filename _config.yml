@@ -4,6 +4,14 @@ author: Sakib Anwar
 copyright: "2024"
 # logo: _static/logo.png  # Uncomment when you add a logo
 
+# Exclude files from the build
+exclude_patterns:
+  - CLAUDE.md
+  - README.md
+  - _build
+  - Thumbs.db
+  - .DS_Store
+
 # Force re-execution of notebooks on each build
 execute:
   execute_notebooks: 'off'  # We use Thebe for live execution instead
