@@ -32,27 +32,16 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install jupyter-book sphinx-exercise
-
-      - name: Debug - List files
-        run: |
-          echo "=== Root directory ==="
-          ls -la
-          echo "=== Chapters directory ==="
-          ls -la chapters/
-          echo "=== _config.yml ==="
-          cat _config.yml
-          echo "=== _toc.yml ==="
-          cat _toc.yml
+          jupyter-book --version
 
       - name: Build the book
         run: |
-          jupyter-book build .
-
-      - name: Debug - Check build output
-        run: |
-          echo "=== Build directory ==="
-          ls -la _build/ || echo "No _build directory"
-          ls -la _build/html/ || echo "No _build/html directory"
+          jupyter-book build . 2>&1 | tee build.log
+          echo "=== Build log ==="
+          cat build.log
+          echo "=== Checking _build directory ==="
+          ls -la _build/ || echo "_build directory does not exist"
+          ls -la _build/html/ || echo "_build/html directory does not exist"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
