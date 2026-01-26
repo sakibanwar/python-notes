@@ -1,0 +1,48 @@
+# Book settings
+title: Python Notes
+author: Sakib Anwar
+copyright: "2024"
+logo: _static/logo.png
+
+# Force re-execution of notebooks on each build
+execute:
+  execute_notebooks: 'off'  # We use Thebe for live execution instead
+
+# Define the name of the latex output file for PDF builds
+latex:
+  latex_documents:
+    targetname: python-notes.tex
+
+# Add a bibtex file so that we can create citations
+bibtex_bibfiles:
+  - references.bib
+
+# Information about where the book exists on the web
+repository:
+  url: https://github.com/sakibanwar/python-notes
+  path_to_book: ""
+  branch: main
+
+# Add GitHub buttons to your book
+html:
+  use_issues_button: true
+  use_repository_button: true
+  use_edit_page_button: true
+  extra_css:
+    - _static/css/custom.css
+  extra_js:
+    - _static/js/exercises.js
+
+# Launch buttons (Thebe for live code)
+launch_buttons:
+  thebe: true
+  colab: true
+  notebook_interface: "classic"
+
+sphinx:
+  config:
+    html_theme_options:
+      navigation_with_keys: false
+    thebe_config:
+      repository_url: "https://github.com/sakibanwar/python-notes"
+      repository_branch: "main"

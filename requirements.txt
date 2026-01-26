@@ -1,0 +1,16 @@
+# Jupyter Book and dependencies
+jupyter-book>=0.15.0
+sphinx-exercise>=0.4.0
+
+# For building and deployment
+ghp-import>=2.1.0
+
+# Python packages used in the course
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+statsmodels>=0.14.0
+scipy>=1.10.0
+streamlit>=1.28.0
+plotly>=5.18.0

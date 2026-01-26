@@ -1,0 +1,82 @@
+/* Custom styles for Python Notes */
+
+/* Exercise blocks */
+.exercise {
+    background-color: #e8f4f8;
+    border-left: 4px solid #0077b6;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+}
+
+.solution {
+    background-color: #f0f9f0;
+    border-left: 4px solid #2e8b57;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+}
+
+/* Code output styling */
+.output {
+    background-color: #f5f5f5;
+    border-left: 3px solid #ccc;
+    padding: 0.5rem 1rem;
+    font-family: monospace;
+    margin: 0.5rem 0;
+}
+
+/* Warning and tip boxes */
+.admonition.warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.admonition.tip {
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+}
+
+.admonition.note {
+    background-color: #e7f1ff;
+    border-left: 4px solid #0d6efd;
+}
+
+.admonition.important {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+/* Interactive code cells */
+.thebe-button {
+    background-color: #0077b6 !important;
+    color: white !important;
+    border-radius: 4px !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.thebe-button:hover {
+    background-color: #005f8a !important;
+}
