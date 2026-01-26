@@ -2,7 +2,7 @@
 title: Python Notes
 author: Sakib Anwar
 copyright: "2024"
-logo: _static/logo.png
+# logo: _static/logo.png  # Uncomment when you add a logo
 
 # Force re-execution of notebooks on each build
 execute:
@@ -30,8 +30,6 @@ html:
   use_edit_page_button: true
   extra_css:
     - _static/css/custom.css
-  extra_js:
-    - _static/js/exercises.js
 
 # Launch buttons (Thebe for live code)
 launch_buttons:
