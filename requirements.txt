@@ -1,5 +1,5 @@
-# Jupyter Book and dependencies
-jupyter-book>=0.15.0
+# Jupyter Book and dependencies (pinned to Sphinx-based version)
+jupyter-book==0.15.1
 sphinx-exercise>=0.4.0
 
 # For building and deployment
