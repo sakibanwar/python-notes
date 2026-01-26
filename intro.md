@@ -1,6 +1,6 @@
 # Welcome to Python Notes
 
-These notes are designed for the **AN7914 Data Analytics and Modelling** course at the University of Winchester. Whether you're completely new to programming or brushing up on your skills, this book will guide you step-by-step through Python fundamentals and data analysis techniques.
+These notes are designed for the **Data Analytics**, **Quantitative Methods and Statistics**, and **Data Analysis** courses at the University of Winchester. Whether you're completely new to programming or brushing up on your skills, this book will guide you step-by-step through Python fundamentals and data analysis techniques.
 
 ## What You'll Learn
 
