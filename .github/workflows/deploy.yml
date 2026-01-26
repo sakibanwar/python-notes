@@ -46,7 +46,7 @@ jobs:
 
       - name: Build the book
         run: |
-          jupyter-book build . --verbose
+          jupyter-book build .
 
       - name: Debug - Check build output
         run: |
