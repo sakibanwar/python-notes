@@ -1,3 +1,14 @@
+---
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Data Visualisation with Seaborn
 
 In this chapter, we'll learn how to create beautiful and informative visualisations using **seaborn**. Data visualisation is one of the most important skills in data analysis — a good chart can reveal patterns that are invisible in raw numbers.
@@ -23,16 +34,16 @@ There are several libraries for data visualisation in Python:
 |---------|-------------|
 | **Matplotlib** | The most versatile and customisable — but verbose |
 | **Seaborn** | Built on matplotlib, easier for beginners, beautiful defaults |
-| **Plotnine** | Similar to R's ggplot2 |
-| **Plotly** | Interactive plots for web applications |
+| **Plotnine** | Library that is very close to R's ggplot2 (probably not updated regularly) |
+| **Lets-plot** | Another library that is very close to ggplot2 (it is maintained regularly) |
 
-We'll focus on **seaborn** because it's easy to learn and produces publication-quality plots with minimal code. Later, you might want to learn matplotlib for more customisation.
+We'll focus on **seaborn** because it's easy to learn and produces publication-quality plots with minimal code. I would suggest you learn Matplotlib later at some point.
 
 ## Setting Up
 
 Let's import the libraries we need:
 
-```python
+```{code-cell} ipython3
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -49,36 +60,15 @@ We import matplotlib as `plt` because seaborn is built on top of it. We'll use `
 
 Seaborn comes with several built-in datasets that are perfect for learning. Let's load the famous "tips" dataset:
 
-```python
+```{code-cell} ipython3
 df_tips = sns.load_dataset('tips')
 df_tips.head()
 ```
 
-```
-   total_bill   tip     sex smoker  day    time  size
-0       16.99  1.01  Female     No  Sun  Dinner     2
-1       10.34  1.66    Male     No  Sun  Dinner     3
-2       21.01  3.50    Male     No  Sun  Dinner     3
-3       23.68  3.31    Male     No  Sun  Dinner     2
-4       24.59  3.61  Female     No  Sun  Dinner     4
-```
-
 This dataset contains information about restaurant bills and tips. Let's explore it:
 
-```python
+```{code-cell} ipython3
 df_tips.describe()
-```
-
-```
-       total_bill         tip        size
-count  244.000000  244.000000  244.000000
-mean    19.785943    2.998279    2.569672
-std      8.902412    1.383638    0.951100
-min      3.070000    1.000000    1.000000
-25%     13.347500    2.000000    2.000000
-50%     17.795000    2.900000    2.000000
-75%     24.127500    3.562500    3.000000
-max     50.810000   10.000000    6.000000
 ```
 
 ## Scatter Plots
@@ -89,15 +79,15 @@ A **scatter plot** shows the relationship between two numerical variables. Each 
 
 Let's see if there's a relationship between the total bill and the tip:
 
-```python
-sns.scatterplot(data=df_tips, x='total_bill', y='tip')
+```{code-cell} ipython3
+sns.scatterplot(data=df_tips, x=df_tips['total_bill'], y=df_tips['tip'])
 plt.show()
 ```
 
 Notice the syntax:
 - `data=df_tips` — the DataFrame to use
-- `x='total_bill'` — the column for the x-axis
-- `y='tip'` — the column for the y-axis
+- `x=df_tips['total_bill']` — the column for the x-axis
+- `y=df_tips['tip']` — the column for the y-axis
 
 The plot shows a **positive relationship**: higher bills tend to have higher tips. This makes intuitive sense!
 
@@ -105,8 +95,8 @@ The plot shows a **positive relationship**: higher bills tend to have higher tip
 
 We can add a third variable using colour. Let's see if the pattern differs by gender:
 
-```python
-sns.scatterplot(data=df_tips, x='total_bill', y='tip', hue='sex')
+```{code-cell} ipython3
+sns.scatterplot(data=df_tips, x=df_tips['total_bill'], y=df_tips['tip'], hue=df_tips['sex'])
 plt.show()
 ```
 
@@ -128,8 +118,8 @@ A **histogram** shows the distribution of a single numerical variable. It divide
 
 Let's see how total bills are distributed:
 
-```python
-sns.histplot(data=df_tips, x='total_bill')
+```{code-cell} ipython3
+sns.histplot(data=df_tips, x=df_tips['total_bill'])
 plt.show()
 ```
 
@@ -139,8 +129,8 @@ Most bills are between $10 and $25, with fewer very low or very high bills.
 
 The `bins` parameter controls how many bars the histogram has:
 
-```python
-sns.histplot(data=df_tips, x='total_bill', bins=40)
+```{code-cell} ipython3
+sns.histplot(data=df_tips, x=df_tips['total_bill'], bins=40)
 plt.show()
 ```
 
@@ -150,21 +140,21 @@ More bins show more detail, but can look noisy. Fewer bins show the overall shap
 
 By default, histograms show counts. You can change this with the `stat` parameter:
 
-```python
+```{code-cell} ipython3
 # Show percentages instead of counts
-sns.histplot(data=df_tips, x='total_bill', bins=30, stat='percent')
+sns.histplot(data=df_tips, x=df_tips['total_bill'], bins=40, stat='percent')
 plt.show()
 ```
 
-```python
+```{code-cell} ipython3
 # Show frequency (same as count)
-sns.histplot(data=df_tips, x='total_bill', bins=30, stat='frequency')
+sns.histplot(data=df_tips, x=df_tips['total_bill'], bins=30, stat='frequency')
 plt.show()
 ```
 
-```python
+```{code-cell} ipython3
 # Show density (area under curve = 1)
-sns.histplot(data=df_tips, x='total_bill', bins=30, stat='density')
+sns.histplot(data=df_tips, x=df_tips['total_bill'], bins=30, stat='density')
 plt.show()
 ```
 
@@ -179,8 +169,8 @@ plt.show()
 
 You can overlay a smooth density curve using `kde=True`:
 
-```python
-sns.histplot(data=df_tips, x='total_bill', kde=True)
+```{code-cell} ipython3
+sns.histplot(data=df_tips, x=df_tips['total_bill'], kde=True)
 plt.show()
 ```
 
@@ -194,8 +184,8 @@ A **bar plot** shows the relationship between a categorical variable and a numer
 
 Let's compare average total bills for lunch vs dinner:
 
-```python
-sns.barplot(data=df_tips, x='time', y='total_bill')
+```{code-cell} ipython3
+sns.barplot(data=df_tips, x=df_tips['time'], y=df_tips['total_bill'])
 plt.show()
 ```
 
@@ -205,8 +195,8 @@ Dinner bills are higher on average than lunch bills.
 
 Add `hue` to compare across another category:
 
-```python
-sns.barplot(data=df_tips, x='time', y='total_bill', hue='sex', errorbar=None)
+```{code-cell} ipython3
+sns.barplot(data=df_tips, x=df_tips['time'], y=df_tips['total_bill'], hue=df_tips['sex'], errorbar=None)
 plt.show()
 ```
 
@@ -226,8 +216,8 @@ A **box plot** (or box-and-whisker plot) shows the distribution of a numerical v
 
 ### Basic Box Plot
 
-```python
-sns.boxplot(data=df_tips, x='total_bill')
+```{code-cell} ipython3
+sns.boxplot(data=df_tips, x=df_tips['total_bill'])
 plt.show()
 ```
 
@@ -237,8 +227,8 @@ This shows the distribution of total bills. The box shows that 50% of bills are 
 
 Box plots are excellent for comparing distributions across categories:
 
-```python
-sns.boxplot(data=df_tips, x='total_bill', y='sex')
+```{code-cell} ipython3
+sns.boxplot(data=df_tips, x=df_tips['total_bill'], y=df_tips['sex'])
 plt.show()
 ```
 
@@ -250,8 +240,8 @@ This shows the distribution of total bills separately for males and females. We 
 
 You can customise the plot using the `.set()` method:
 
-```python
-sns.boxplot(data=df_tips, x='total_bill', y='sex').set(
+```{code-cell} ipython3
+sns.boxplot(data=df_tips, x=df_tips['total_bill'], y=df_tips['sex']).set(
     title='Distribution of Bills by Gender',
     xlabel='Total Bill ($)',
     ylabel='Gender'
@@ -267,23 +257,14 @@ A **line plot** shows how a numerical variable changes over time or another orde
 
 Let's use the flights dataset, which shows monthly airline passenger numbers:
 
-```python
+```{code-cell} ipython3
 df_flights = sns.load_dataset('flights')
 df_flights.head()
 ```
 
-```
-   year month  passengers
-0  1949   Jan         112
-1  1949   Feb         118
-2  1949   Mar         132
-3  1949   Apr         129
-4  1949   May         121
-```
-
 ### Basic Line Plot
 
-```python
+```{code-cell} ipython3
 sns.lineplot(data=df_flights, x='year', y='passengers', errorbar=None)
 plt.show()
 ```
@@ -294,7 +275,7 @@ This shows the average number of passengers per year. The clear upward trend sho
 
 Use `hue` to show separate lines for each category:
 
-```python
+```{code-cell} ipython3
 sns.lineplot(data=df_flights, x='year', y='passengers', hue='month')
 plt.show()
 ```
@@ -308,7 +289,7 @@ Now we can see the trend for each month. Notice that:
 
 Sometimes you want to create separate plots for different categories. The `displot` function (distribution plot) makes this easy:
 
-```python
+```{code-cell} ipython3
 sns.displot(data=df_tips, x='total_bill', col='time', kde=True)
 plt.show()
 ```
@@ -332,7 +313,7 @@ Here's a quick guide to choosing the right visualisation:
 To save a plot as an image file, use matplotlib's `savefig`:
 
 ```python
-sns.histplot(data=df_tips, x='total_bill', bins=30)
+sns.histplot(data=df_tips, x=df_tips['total_bill'], bins=30)
 plt.savefig('my_histogram.png')
 plt.show()
 ```
@@ -347,16 +328,16 @@ Call `plt.savefig()` **before** `plt.show()`. Once `show()` is called, the figur
 
 ### Changing Figure Size
 
-```python
+```{code-cell} ipython3
 plt.figure(figsize=(10, 6))  # Width, Height in inches
-sns.histplot(data=df_tips, x='total_bill')
+sns.histplot(data=df_tips, x=df_tips['total_bill'])
 plt.show()
 ```
 
 ### Adding Titles and Labels
 
-```python
-sns.scatterplot(data=df_tips, x='total_bill', y='tip')
+```{code-cell} ipython3
+sns.scatterplot(data=df_tips, x=df_tips['total_bill'], y=df_tips['tip'])
 plt.title('Relationship Between Bill and Tip')
 plt.xlabel('Total Bill ($)')
 plt.ylabel('Tip ($)')
@@ -367,8 +348,8 @@ plt.show()
 
 Seaborn has many built-in colour palettes:
 
-```python
-sns.scatterplot(data=df_tips, x='total_bill', y='tip', hue='day', palette='Set2')
+```{code-cell} ipython3
+sns.scatterplot(data=df_tips, x=df_tips['total_bill'], y=df_tips['tip'], hue=df_tips['day'], palette='Set2')
 plt.show()
 ```
 
@@ -398,7 +379,7 @@ import matplotlib.pyplot as plt
 
 df_tips = sns.load_dataset('tips')
 
-sns.scatterplot(data=df_tips, x='total_bill', y='tip', hue='day')
+sns.scatterplot(data=df_tips, x=df_tips['total_bill'], y=df_tips['tip'], hue=df_tips['day'])
 plt.title('Tips by Total Bill and Day')
 plt.show()
 ```
@@ -425,7 +406,7 @@ import matplotlib.pyplot as plt
 
 df_tips = sns.load_dataset('tips')
 
-sns.histplot(data=df_tips, x='tip', bins=20, kde=True, stat='percent')
+sns.histplot(data=df_tips, x=df_tips['tip'], bins=20, kde=True, stat='percent')
 plt.title('Distribution of Tips')
 plt.xlabel('Tip ($)')
 plt.show()
@@ -452,7 +433,7 @@ import matplotlib.pyplot as plt
 
 df_tips = sns.load_dataset('tips')
 
-sns.boxplot(data=df_tips, x='day', y='total_bill')
+sns.boxplot(data=df_tips, x=df_tips['day'], y=df_tips['total_bill'])
 plt.title('Total Bill Distribution by Day')
 plt.xlabel('Day of Week')
 plt.ylabel('Total Bill ($)')
@@ -492,7 +473,7 @@ penguins = sns.load_dataset('penguins')
 
 # 1. Scatter plot
 plt.figure(figsize=(10, 6))
-sns.scatterplot(data=penguins, x='flipper_length_mm', y='body_mass_g', hue='species')
+sns.scatterplot(data=penguins, x=penguins['flipper_length_mm'], y=penguins['body_mass_g'], hue=penguins['species'])
 plt.title('Penguin Size by Species')
 plt.xlabel('Flipper Length (mm)')
 plt.ylabel('Body Mass (g)')
@@ -500,14 +481,14 @@ plt.show()
 
 # 2. Histogram
 plt.figure(figsize=(10, 6))
-sns.histplot(data=penguins, x='bill_length_mm', hue='species', bins=20)
+sns.histplot(data=penguins, x=penguins['bill_length_mm'], hue=penguins['species'], bins=20)
 plt.title('Bill Length Distribution by Species')
 plt.xlabel('Bill Length (mm)')
 plt.show()
 
 # 3. Box plot
 plt.figure(figsize=(10, 6))
-sns.boxplot(data=penguins, x='species', y='body_mass_g')
+sns.boxplot(data=penguins, x=penguins['species'], y=penguins['body_mass_g'])
 plt.title('Body Mass by Species')
 plt.xlabel('Species')
 plt.ylabel('Body Mass (g)')

@@ -12,9 +12,10 @@ exclude_patterns:
   - Thumbs.db
   - .DS_Store
 
-# Force re-execution of notebooks on each build
+# Execute notebooks on build to show outputs
 execute:
-  execute_notebooks: 'off'  # We use Thebe for live execution instead
+  execute_notebooks: 'auto'  # Execute notebooks that have no outputs
+  timeout: 120  # Timeout in seconds for each cell
 
 # Define the name of the latex output file for PDF builds
 latex:
