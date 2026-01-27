@@ -1,3 +1,14 @@
+---
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Conditionals
 
 In this chapter, we're diving into **conditionals** in Python. Conditionals are a fundamental concept in programming, allowing your code to make decisions based on certain criteria. This enables your programs to respond differently to different inputs or situations, making your code more dynamic and versatile.
@@ -21,29 +32,17 @@ Notice that we use **double equals** `==` for comparison. A single `=` is for **
 
 These operators allow you to ask questions about the relationship between values. Each comparison returns either `True` or `False` — these are called **boolean** values.
 
-```python
+```{code-cell} ipython3
 print(5 > 3)
 ```
 
-```
-True
-```
-
-```python
+```{code-cell} ipython3
 print(5 < 3)
 ```
 
-```
-False
-```
-
-```python
+```{code-cell} ipython3
 x = 10
 print(x == 10)
-```
-
-```
-True
 ```
 
 ## The `if` Statement
@@ -83,10 +82,10 @@ y = int(input('What is y? '))
 
 if x < y:
     print('x is less than y')
-    
+
 if x > y:
     print('x is greater than y')
-    
+
 if x == y:
     print('x equals y')
 ```
@@ -285,16 +284,10 @@ Loops are powerful constructs that allow you to repeat a block of code multiple 
 
 Imagine you want to print "meow" three times:
 
-```python
+```{code-cell} ipython3
 print('meow')
 print('meow')
 print('meow')
-```
-
-```
-meow
-meow
-meow
 ```
 
 This works, but what if you wanted to print it 500 times? Typing `print('meow')` 500 times would be tedious and error-prone. This is exactly what loops are for — automating repetition.
@@ -303,18 +296,12 @@ This works, but what if you wanted to print it 500 times? Typing `print('meow')`
 
 A `while` loop repeats as long as a condition is `True`:
 
-```python
+```{code-cell} ipython3
 i = 3
 
 while i != 0:
     print('meow')
     i = i - 1
-```
-
-```
-meow
-meow
-meow
 ```
 
 Let's trace through this step by step:
@@ -338,7 +325,7 @@ The loop body must eventually make the condition `False`, otherwise you get an *
 
 Here's another example — a countdown:
 
-```python
+```{code-cell} ipython3
 n = 5
 
 while n > 0:
@@ -348,30 +335,15 @@ while n > 0:
 print('Blastoff!')
 ```
 
-```
-5
-4
-3
-2
-1
-Blastoff!
-```
-
 You can almost read this as English: "While n is greater than 0, print n and reduce n by 1. When n reaches 0, print Blastoff!"
 
 ### The `for` Loop
 
 A `for` loop iterates through a sequence of items. To understand `for` loops, let's first introduce **lists** — a way to store multiple values:
 
-```python
+```{code-cell} ipython3
 for i in [0, 1, 2]:
     print('meow')
-```
-
-```
-meow
-meow
-meow
 ```
 
 Here, `[0, 1, 2]` is a list containing three items. The `for` loop goes through each item:
@@ -386,15 +358,9 @@ Notice how clean this is compared to the `while` loop! We don't need to manage a
 
 What if you wanted to iterate 1000 times? Typing out `[0, 1, 2, ..., 999]` would be impractical. The `range()` function generates a sequence of numbers for you:
 
-```python
+```{code-cell} ipython3
 for i in range(3):
     print('meow')
-```
-
-```
-meow
-meow
-meow
 ```
 
 `range(3)` generates the numbers 0, 1, and 2 (three numbers total, starting from 0). This is equivalent to `[0, 1, 2]` but much more convenient for large ranges.
@@ -405,32 +371,16 @@ meow
 
 You can also specify a starting point:
 
-```python
+```{code-cell} ipython3
 for i in range(1, 6):  # 1 to 5
     print(i)
 ```
 
-```
-1
-2
-3
-4
-5
-```
-
 Or even a step size:
 
-```python
+```{code-cell} ipython3
 for i in range(0, 10, 2):  # 0 to 9, stepping by 2
     print(i)
-```
-
-```
-0
-2
-4
-6
-8
 ```
 
 ## When to Use `for` vs `while`
@@ -521,7 +471,7 @@ n = int(input("Start countdown from: "))
 while n > 0:
     print(n)
     n = n - 1
-    
+
 print("Blast off!")
 ```
 ````
@@ -545,7 +495,7 @@ total = 0
 
 for i in range(1, n + 1):
     total = total + i
-    
+
 print(f"The sum from 1 to {n} is {total}")
 ```
 ````

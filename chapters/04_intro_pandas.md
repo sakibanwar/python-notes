@@ -1,3 +1,14 @@
+---
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Introduction to Pandas
 
 In this chapter, we'll learn about **pandas** — a powerful library that makes working with data in Python much easier. If you've ever used Excel or Google Sheets, pandas will feel somewhat familiar. It gives you tables (called DataFrames) that you can sort, filter, and analyse with just a few lines of code.
@@ -21,16 +32,12 @@ pip install pandas
 
 Once installed, we import pandas using a conventional alias:
 
-```python
+```{code-cell} ipython3
 import pandas as pd
 ```
 
-```python
+```{code-cell} ipython3
 pd.__version__
-```
-
-```
-'2.0.0'
 ```
 
 Notice we import pandas **as `pd`**. This is a widely-used convention — almost every pandas tutorial and documentation uses this alias. When you see `pd.something()`, you'll know it's a pandas function.
@@ -54,15 +61,8 @@ A **DataFrame** is a table. It contains an array of individual entries, each of 
 
 The simplest way to create a DataFrame is from a dictionary:
 
-```python
+```{code-cell} ipython3
 pd.DataFrame({'Yup': [50, 21, 32], 'Nope': [131, 2, 200]})
-```
-
-```
-   Yup  Nope
-0   50   131
-1   21     2
-2   32   200
 ```
 
 Notice what happened here:
@@ -72,34 +72,22 @@ Notice what happened here:
 
 DataFrame entries are not limited to integers. Here's a DataFrame with strings:
 
-```python
+```{code-cell} ipython3
 pd.DataFrame({
     'Bob': ['I liked it.', 'It was awful.'],
     'Sue': ['Pretty good.', 'Bland.']
 })
 ```
 
-```
-             Bob           Sue
-0    I liked it.  Pretty good.
-1  It was awful.        Bland.
-```
-
 ### Custom Row Labels (Index)
 
 The automatic numbering (0, 1, 2, ...) is fine for many purposes, but sometimes you want meaningful row labels. You can specify these using the `index` parameter:
 
-```python
+```{code-cell} ipython3
 pd.DataFrame({
     'Bob': ['I liked it.', 'It was awful.'],
     'Sue': ['Pretty good.', 'Bland.']
 }, index=['Product A', 'Product B'])
-```
-
-```
-                     Bob           Sue
-Product A    I liked it.  Pretty good.
-Product B  It was awful.        Bland.
 ```
 
 Now instead of 0 and 1, our rows are labelled 'Product A' and 'Product B'. This makes the data more readable and easier to reference.
@@ -110,16 +98,8 @@ A **Series** is a sequence of data values. If a DataFrame is a table, a Series i
 
 You can create a Series from a list:
 
-```python
+```{code-cell} ipython3
 pd.Series([1, 2, 3, 4])
-```
-
-```
-0    1
-1    2
-2    3
-3    4
-dtype: int64
 ```
 
 Notice that a Series has:
@@ -129,15 +109,8 @@ Notice that a Series has:
 
 You can also give a Series a name and custom index:
 
-```python
+```{code-cell} ipython3
 pd.Series([30, 35, 40], index=['2020', '2021', '2022'], name='Sales')
-```
-
-```
-2020    30
-2021    35
-2022    40
-Name: Sales, dtype: int64
 ```
 
 ```{tip}
@@ -152,8 +125,8 @@ In the real world, you won't type your data manually. Instead, you'll load it fr
 
 Use `pd.read_csv()` to load a CSV file:
 
-```python
-employee = pd.read_csv('employee_dataset.csv')
+```{code-cell} ipython3
+employee = pd.read_csv('../data/employee_dataset.csv')
 ```
 
 The argument can be:
@@ -162,25 +135,8 @@ The argument can be:
 
 Let's look at the data:
 
-```python
+```{code-cell} ipython3
 employee
-```
-
-```
-    Employee_ID Department  Years_of_Experience  Full_Time Performance_Score   Salary First_Name  Last_Name
-0             1    Finance                 1.82      False              Good  54550.0    Michael      Davis
-1             2         IT                 2.09      False              Poor  55225.0      Karen      Brown
-2             3         IT                13.24      False         Excellent  83100.0     Joseph    Johnson
-3             4    Finance                 1.55      False         Excellent  53875.0      David     Garcia
-4             5  Marketing                 4.16       True           Average  60400.0      Linda   Martinez
-..          ...        ...                  ...        ...               ...      ...        ...        ...
-45           46    Finance                14.65       True              Good  86625.0       John      Lopez
-46           47         IT                 7.38       True           Average  68450.0      Susan    Johnson
-47           48         IT                16.16       True         Excellent  90400.0     Thomas      Smith
-48           49         IT                 5.72       True           Average  64300.0   Patricia     Thomas
-49           50         IT                 4.32       True              Good  60800.0      Sarah      Jones
-
-[50 rows x 8 columns]
 ```
 
 Notice that pandas shows the first and last few rows, with `...` in between. This is helpful when your dataset is large.
@@ -193,28 +149,19 @@ Once you've loaded data, you'll want to explore it. Pandas provides several usef
 
 Use `.head()` to see the first few rows:
 
-```python
+```{code-cell} ipython3
 employee.head()
-```
-
-```
-   Employee_ID Department  Years_of_Experience  Full_Time Performance_Score   Salary First_Name Last_Name
-0            1    Finance                 1.82      False              Good  54550.0    Michael     Davis
-1            2         IT                 2.09      False              Poor  55225.0      Karen     Brown
-2            3         IT                13.24      False         Excellent  83100.0     Joseph   Johnson
-3            4    Finance                 1.55      False         Excellent  53875.0      David    Garcia
-4            5  Marketing                 4.16       True           Average  60400.0      Linda  Martinez
 ```
 
 By default, `.head()` shows 5 rows. You can specify a different number:
 
-```python
+```{code-cell} ipython3
 employee.head(10)  # First 10 rows
 ```
 
 Similarly, `.tail()` shows the last rows:
 
-```python
+```{code-cell} ipython3
 employee.tail(10)  # Last 10 rows
 ```
 
@@ -222,12 +169,8 @@ employee.tail(10)  # Last 10 rows
 
 How big is your dataset? Use `.shape`:
 
-```python
+```{code-cell} ipython3
 employee.shape
-```
-
-```
-(50, 8)
 ```
 
 This tells us we have **50 rows** and **8 columns**.
@@ -236,34 +179,16 @@ This tells us we have **50 rows** and **8 columns**.
 
 To see all column names:
 
-```python
+```{code-cell} ipython3
 employee.columns
-```
-
-```
-Index(['Employee_ID', 'Department', 'Years_of_Experience', 'Full_Time',
-       'Performance_Score', 'Salary', 'First_Name', 'Last_Name'],
-      dtype='object')
 ```
 
 ### Getting Summary Statistics
 
 The `.describe()` method gives you summary statistics for numerical columns:
 
-```python
+```{code-cell} ipython3
 employee.describe()
-```
-
-```
-       Employee_ID  Years_of_Experience        Salary
-count    50.000000            50.000000     50.000000
-mean     25.500000            10.017600  75044.000000
-std      14.577380             5.462507  13656.266372
-min       1.000000             1.120000  52800.000000
-25%      13.250000             5.277500  63193.750000
-50%      25.500000            10.210000  75525.000000
-75%      37.750000            14.607500  86518.750000
-max      50.000000            19.420000  98550.000000
 ```
 
 This shows you the count, mean, standard deviation, min, max, and quartiles (25%, 50%, 75%) for each numerical column. It's a quick way to understand the distribution of your data.
@@ -272,34 +197,16 @@ This shows you the count, mean, standard deviation, min, max, and quartiles (25%
 
 To select a single column, use square brackets with the column name:
 
-```python
+```{code-cell} ipython3
 employee['Salary']
-```
-
-```
-0     54550.0
-1     55225.0
-2     83100.0
-...
-49    60800.0
-Name: Salary, dtype: float64
 ```
 
 Notice this returns a **Series** (a single column).
 
 To select multiple columns, pass a **list** of column names:
 
-```python
+```{code-cell} ipython3
 employee[['Performance_Score', 'Salary']]
-```
-
-```
-   Performance_Score   Salary
-0               Good  54550.0
-1               Poor  55225.0
-2          Excellent  83100.0
-3          Excellent  53875.0
-...
 ```
 
 Notice the double brackets `[[...]]`. The outer brackets are for indexing the DataFrame; the inner brackets create a list of column names. This returns a **DataFrame** (not a Series).
@@ -323,55 +230,24 @@ This is one of the most important concepts in pandas, so let's explore both care
 
 To select the **first row** (index 0):
 
-```python
+```{code-cell} ipython3
 employee.iloc[0]
-```
-
-```
-Employee_ID                    1
-Department               Finance
-Years_of_Experience         1.82
-Full_Time                  False
-Performance_Score           Good
-Salary                   54550.0
-First_Name               Michael
-Last_Name                  Davis
-Name: 0, dtype: object
 ```
 
 This returns a Series containing all columns for that row.
 
 The **second row** (index 1):
 
-```python
+```{code-cell} ipython3
 employee.iloc[1]
-```
-
-```
-Employee_ID                  2
-Department                  IT
-Years_of_Experience       2.09
-Full_Time                False
-Performance_Score         Poor
-Salary                 55225.0
-First_Name               Karen
-Last_Name                Brown
-Name: 1, dtype: object
 ```
 
 ### Slicing Rows
 
 You can select multiple rows using slicing:
 
-```python
+```{code-cell} ipython3
 employee.iloc[0:3]  # Rows 0, 1, and 2
-```
-
-```
-   Employee_ID Department  Years_of_Experience  Full_Time Performance_Score   Salary First_Name Last_Name
-0            1    Finance                 1.82      False              Good  54550.0    Michael     Davis
-1            2         IT                 2.09      False              Poor  55225.0      Karen     Brown
-2            3         IT                13.24      False         Excellent  83100.0     Joseph   Johnson
 ```
 
 Remember: slicing in Python is **exclusive** of the end index. `0:3` gives you indices 0, 1, 2 (not 3).
@@ -380,61 +256,32 @@ Remember: slicing in Python is **exclusive** of the end index. `0:3` gives you i
 
 What if you want specific rows that aren't in sequence? Pass a list of indices:
 
-```python
+```{code-cell} ipython3
 employee.iloc[[1, 2, 39]]
-```
-
-```
-   Employee_ID Department  Years_of_Experience  Full_Time Performance_Score   Salary First_Name Last_Name
-1            2         IT                 2.09      False              Poor  55225.0      Karen     Brown
-2            3         IT                13.24      False         Excellent  83100.0     Joseph   Johnson
-39          40         HR                11.64       True         Excellent  79100.0      Karen  Martinez
 ```
 
 ### Selecting Rows and Columns
 
 `.iloc` can select both rows and columns using `[row, column]`:
 
-```python
+```{code-cell} ipython3
 employee.iloc[0, 0]  # First row, first column
 ```
 
-```
-1
-```
-
-```python
+```{code-cell} ipython3
 employee.iloc[0, 1]  # First row, second column
-```
-
-```
-'Finance'
 ```
 
 You can also use lists and slices for both:
 
-```python
+```{code-cell} ipython3
 employee.iloc[[0, 1, 2], [0, 1, 2]]  # First 3 rows, first 3 columns
-```
-
-```
-   Employee_ID Department  Years_of_Experience
-0            1    Finance                 1.82
-1            2         IT                 2.09
-2            3         IT                13.24
 ```
 
 Or with slicing:
 
-```python
+```{code-cell} ipython3
 employee.iloc[0:3, 0:4]  # Rows 0-2, columns 0-3
-```
-
-```
-   Employee_ID Department  Years_of_Experience  Full_Time
-0            1    Finance                 1.82      False
-1            2         IT                 2.09      False
-2            3         IT                13.24      False
 ```
 
 ## Label-Based Selection with `.loc`
@@ -443,7 +290,7 @@ employee.iloc[0:3, 0:4]  # Rows 0-2, columns 0-3
 
 To see `.loc` in action clearly, let's create a DataFrame with meaningful row labels:
 
-```python
+```{code-cell} ipython3
 df1 = pd.DataFrame(
     [[1, 2, 2], [4, 5, 2], [7, 5, 2], [232, 21, 24]],
     index=['cobra', 'viper', 'sidewinder', 'rattle_snake'],
@@ -452,69 +299,34 @@ df1 = pd.DataFrame(
 df1
 ```
 
-```
-              max_speed  shield  windy
-cobra                 1       2      2
-viper                 4       5      2
-sidewinder            7       5      2
-rattle_snake        232      21     24
-```
-
 ### Selecting Rows by Label
 
-```python
+```{code-cell} ipython3
 df1.loc['viper']
-```
-
-```
-max_speed    4
-shield       5
-windy        2
-Name: viper, dtype: int64
 ```
 
 ### Selecting Multiple Rows
 
 Pass a list of labels:
 
-```python
+```{code-cell} ipython3
 df1.loc[['viper', 'rattle_snake']]
-```
-
-```
-              max_speed  shield  windy
-viper                 4       5      2
-rattle_snake        232      21     24
 ```
 
 ### Slicing with Labels
 
 Unlike `.iloc`, `.loc` slicing is **inclusive** of the end label:
 
-```python
+```{code-cell} ipython3
 df1.loc['viper':'rattle_snake']
-```
-
-```
-              max_speed  shield  windy
-viper                 4       5      2
-sidewinder            7       5      2
-rattle_snake        232      21     24
 ```
 
 Notice this includes `rattle_snake`!
 
 ### Selecting Rows and Columns by Label
 
-```python
+```{code-cell} ipython3
 df1.loc['viper':'rattle_snake', 'shield':'windy']
-```
-
-```
-              shield  windy
-viper              5      2
-sidewinder         5      2
-rattle_snake      21     24
 ```
 
 ## The Difference Between `.loc` and `.iloc`
@@ -536,22 +348,28 @@ Be careful! `df.iloc[0:3]` and `df.loc[0:3]` can give different results if your 
 
 Let's put it all together with our employee dataset:
 
-```python
-# Load the data
-employee = pd.read_csv('employee_dataset.csv')
-
+```{code-cell} ipython3
 # Check the shape
 print(f"Dataset has {employee.shape[0]} rows and {employee.shape[1]} columns")
+```
 
+```{code-cell} ipython3
 # View first few rows
 employee.head()
+```
 
+```{code-cell} ipython3
 # Get summary statistics
 employee.describe()
+```
 
+```{code-cell} ipython3
 # Select specific columns
 salaries = employee[['First_Name', 'Last_Name', 'Salary']]
+salaries.head()
+```
 
+```{code-cell} ipython3
 # Select specific rows and columns
 employee.iloc[0:5, [1, 5]]  # First 5 rows, columns 1 and 5
 ```

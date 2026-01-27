@@ -1,3 +1,14 @@
+---
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Getting Started with Python
 
 In this chapter, we'll write our first Python programs. We'll learn about printing output, working with different types of values, creating variables, and even building our own functions. By the end, you'll have a solid foundation for everything that follows.
@@ -6,24 +17,16 @@ In this chapter, we'll write our first Python programs. We'll learn about printi
 
 Let's start with the classic "Hello World" program. This is traditionally the first program anyone writes when learning a new language.
 
-```python
+```{code-cell} ipython3
 print("Hello World")
-```
-
-```
-Hello World
 ```
 
 You'll notice we used a Python built-in function called `print()`. This function takes whatever you give it (we call this the *argument* or *input*) and displays it on the screen. Our argument was `"Hello World"`.
 
 We could have done the same thing with a slight variation:
 
-```python
+```{code-cell} ipython3
 print('Hello World')
-```
-
-```
-Hello World
 ```
 
 Notice here that we got the same result — it printed `Hello World`. But do you see the difference? We used single quotes `' '` instead of double quotes `" "`. In Python, both work exactly the same for strings. You can use whichever you prefer, but try to be consistent throughout your code.
@@ -34,20 +37,12 @@ Notice here that we got the same result — it printed `Hello World`. But do you
 
 We can also print numbers:
 
-```python
+```{code-cell} ipython3
 print(2)
 ```
 
-```
-2
-```
-
-```python
+```{code-cell} ipython3
 print(100)
-```
-
-```
-100
 ```
 
 ## Values and Types
@@ -64,46 +59,26 @@ Strings are called "strings" because they contain a "string" of characters (lett
 
 Python can tell you the type of any value using the `type()` function:
 
-```python
+```{code-cell} ipython3
 type('Hello World')
 ```
 
-```
-str
-```
-
-```python
+```{code-cell} ipython3
 type(2)
 ```
 
-```
-int
-```
-
-```python
+```{code-cell} ipython3
 type(2.0)
 ```
 
-```
-float
-```
-
-```python
+```{code-cell} ipython3
 type(2.2)
-```
-
-```
-float
 ```
 
 Now here's something important — what type is `'2'`?
 
-```python
+```{code-cell} ipython3
 type('2')
-```
-
-```
-str
 ```
 
 Notice that `'2'` is a **string**, not an integer! The quotation marks make all the difference. Python sees the quotes and treats it as text, not a number. This distinction will become very important later when we start doing calculations with user input.
@@ -118,7 +93,7 @@ One of the most powerful features of a programming language is the ability to ma
 
 An **assignment statement** creates a new variable and gives it a value:
 
-```python
+```{code-cell} ipython3
 message = 'And now for something completely different'
 some_number = 2
 ```
@@ -131,38 +106,22 @@ The `=` sign here doesn't mean "equals" in the mathematical sense. It means "ass
 
 To display the value of a variable, you can use a print statement:
 
-```python
+```{code-cell} ipython3
 print(message)
 ```
 
-```
-And now for something completely different
-```
-
-```python
+```{code-cell} ipython3
 print(some_number)
-```
-
-```
-2
 ```
 
 The type of a variable is simply the type of the value it refers to:
 
-```python
+```{code-cell} ipython3
 type(message)
 ```
 
-```
-str
-```
-
-```python
+```{code-cell} ipython3
 type(some_number)
-```
-
-```
-int
 ```
 
 ### Variable Naming Rules
@@ -190,38 +149,26 @@ total_score_2024 = 95
 
 In the `print()` function, we can include variables. Let's say we create a variable called `name`:
 
-```python
+```{code-cell} ipython3
 name = "Nasreen"
 ```
 
-```python
+```{code-cell} ipython3
 print("Hello", name)
-```
-
-```
-Hello Nasreen
 ```
 
 In the code above, we used two inputs to the print function: the string `"Hello"` and the variable `name`. The print function automatically adds a space between multiple arguments.
 
 We could have gotten a similar result by **concatenating** (joining) strings:
 
-```python
+```{code-cell} ipython3
 print("Hello" + name)
-```
-
-```
-HelloNasreen
 ```
 
 But the output is not quite right — there's no space between "Hello" and "Nasreen". We can fix that by adding a space inside the first string:
 
-```python
+```{code-cell} ipython3
 print("Hello " + name)
-```
-
-```
-Hello Nasreen
 ```
 
 ### The Input Function
@@ -287,8 +234,8 @@ print("Hello", name_input)
 ```
 
 ```
-What is your name?    Sakib   
-Hello    Sakib   
+What is your name?    Sakib
+Hello    Sakib
 ```
 
 We see that the user pressed the spacebar too many times! This messes up our output. You should never expect your users to cooperate perfectly. Therefore, you need to ensure that user input is cleaned up.
@@ -302,7 +249,7 @@ print("Hello", name_clean)
 ```
 
 ```
-What is your name?    Sakib   
+What is your name?    Sakib
 Hello Sakib
 ```
 
@@ -371,38 +318,22 @@ Write comments to explain **why** you're doing something, not **what** the code 
 
 In Python, an integer is referred to as an `int`. Let's do some calculations:
 
-```python
+```{code-cell} ipython3
 2 + 3
 ```
 
-```
-5
-```
-
-```python
+```{code-cell} ipython3
 a = 2
 b = 3
 print(a + b)
 ```
 
-```
-5
-```
-
-```python
+```{code-cell} ipython3
 print(a / b)
 ```
 
-```
-0.6666666666666666
-```
-
-```python
+```{code-cell} ipython3
 print(a * b)
-```
-
-```
-6
 ```
 
 Python supports all the basic arithmetic operators:
@@ -419,27 +350,19 @@ Python supports all the basic arithmetic operators:
 
 For exponents (powers), we use `**`. So to calculate $2^3$ (2 × 2 × 2):
 
-```python
+```{code-cell} ipython3
 2 ** 3
 ```
 
-```
-8
-```
-
-```python
+```{code-cell} ipython3
 print(a ** b)  # 2 to the power of 3
-```
-
-```
-8
 ```
 
 ### Converting Types
 
 Sometimes you need to convert between types. What if you want to convert a string to an integer?
 
-```python
+```{code-cell} ipython3
 c = '2'
 d = '3'
 c1 = int(c)
@@ -447,20 +370,12 @@ d1 = int(d)
 print(c1 * d1)
 ```
 
-```
-6
-```
-
 The `int()` function converts a value to an integer. Similarly, `float()` converts to a decimal number, and `str()` converts to a string.
 
-```python
+```{code-cell} ipython3
 z = 3.2
 z1 = int(z)
 print(z1)
-```
-
-```
-3
 ```
 
 Notice that converting a float to an integer **truncates** (cuts off) the decimal part — it doesn't round!
@@ -521,7 +436,7 @@ So far, we've used functions that come with Python (`print()`, `input()`, `type(
 
 We use the `def` keyword to **define** a function:
 
-```python
+```{code-cell} ipython3
 def print_lyrics():
     print("I'm a lumberjack, and I'm okay.")
     print("I sleep all night and I work all day.")
@@ -541,30 +456,21 @@ In Python, indentation matters! The function body must be indented (typically 4 
 
 Let's check what type `print_lyrics` is:
 
-```python
+```{code-cell} ipython3
 type(print_lyrics)
-```
-
-```
-function
 ```
 
 No surprise — it's a function! Now let's **call** the function:
 
-```python
+```{code-cell} ipython3
 print_lyrics()
-```
-
-```
-I'm a lumberjack, and I'm okay.
-I sleep all night and I work all day.
 ```
 
 ### Functions with Parameters
 
 Let's create a function that takes inputs (called **parameters**):
 
-```python
+```{code-cell} ipython3
 def add_two_things(a, b):
     addition = a + b
     print(addition)
@@ -572,23 +478,16 @@ def add_two_things(a, b):
 
 Now let's call it:
 
-```python
+```{code-cell} ipython3
 add_two_things(3, 2)
-```
-
-```
-5
 ```
 
 We get the desired result. But what if we want to use this function's result somewhere else? Let's try:
 
-```python
-add_two_things(3, 2) * 3
-```
+```{code-cell} ipython3
+:tags: [raises-exception]
 
-```
-5
-TypeError: unsupported operand type(s) for *: 'NoneType' and 'int'
+add_two_things(3, 2) * 3
 ```
 
 We get an error! The problem is that our function **prints** the result but doesn't **return** it. When a function doesn't explicitly return a value, it returns `None` — and you can't multiply `None` by 3.
@@ -597,7 +496,7 @@ We get an error! The problem is that our function **prints** the result but does
 
 To fix this, we use `return` instead of `print()`:
 
-```python
+```{code-cell} ipython3
 def add_two_things(a, b):
     addition = a + b
     return addition
@@ -605,12 +504,8 @@ def add_two_things(a, b):
 
 Now the function **gives back** a value that we can use:
 
-```python
+```{code-cell} ipython3
 add_two_things(3, 2) * 3
-```
-
-```
-15
 ```
 
 The difference between `print` and `return`:

@@ -1,8 +1,19 @@
+---
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Data Structures and Loops
 
 So far, we've stored information in individual variables:
 
-```python
+```{code-cell} ipython3
 a = 'Sakib'
 b = 1
 c = 2.0
@@ -10,7 +21,7 @@ c = 2.0
 
 Maybe we want to store the age of Sakib:
 
-```python
+```{code-cell} ipython3
 sakib_age = 100
 ```
 
@@ -18,7 +29,7 @@ But this approach becomes impractical quickly. What if we need to store the age 
 
 Instead, we can store multiple pieces of information using Python's built-in **data structures**. Here's a preview:
 
-```python
+```{code-cell} ipython3
 age = [10, 20, 32, 35, 26]
 ```
 
@@ -38,12 +49,12 @@ Python has four main built-in data structures:
 Let's see examples of each:
 
 **List:**
-```python
+```{code-cell} ipython3
 age = [10, 20, 32, 35, 26]
 ```
 
 **Dictionary:**
-```python
+```{code-cell} ipython3
 students = {
     'Hermoine': 'Gryffindor',
     'Harry': 'Gryffindor',
@@ -53,7 +64,7 @@ students = {
 ```
 
 **Tuple:**
-```python
+```{code-cell} ipython3
 age_tuple = (10, 20, 30, 200)
 ```
 
@@ -65,21 +76,21 @@ A **list** is an ordered collection of items. Think of it like a numbered contai
 
 ### Creating Lists
 
-```python
+```{code-cell} ipython3
 list_of_students = ['Hermoine', 'Harry', 'Ron', 'Draco']
 ```
 
-```python
+```{code-cell} ipython3
 animals = ['dog', 'cat', 'cow']
 ```
 
-```python
+```{code-cell} ipython3
 ages = [10, 20, 32, 35, 26]
 ```
 
 Lists can contain **any type** of value, and you can even mix types:
 
-```python
+```{code-cell} ipython3
 anything = ['spam', 2.0, 5, [10, 20]]
 ```
 
@@ -87,7 +98,7 @@ Notice that last item — a list inside a list! This is called a **nested** list
 
 An empty list is created with empty brackets:
 
-```python
+```{code-cell} ipython3
 empty = []
 ```
 
@@ -95,19 +106,15 @@ empty = []
 
 The `len()` function tells you how many items are in a list:
 
-```python
+```{code-cell} ipython3
 len(list_of_students)
-```
-
-```
-4
 ```
 
 ### Accessing Items (Indexing)
 
 Each item in a list has a position number called an **index**. Here's the crucial thing to remember: **indexing starts at 0, not 1!**
 
-```python
+```{code-cell} ipython3
 list_of_students = ['Hermoine', 'Harry', 'Ron', 'Draco']
 ```
 
@@ -117,40 +124,26 @@ list_of_students = ['Hermoine', 'Harry', 'Ron', 'Draco']
 
 To access the **first** item:
 
-```python
+```{code-cell} ipython3
 list_of_students[0]
 ```
 
-```
-'Hermoine'
-```
-
-```python
+```{code-cell} ipython3
 print(list_of_students[0])
-```
-
-```
-Hermoine
 ```
 
 To access the **last** item (index 3):
 
-```python
+```{code-cell} ipython3
 list_of_students[3]
-```
-
-```
-'Draco'
 ```
 
 What happens if you try to access an index that doesn't exist?
 
-```python
-list_of_students[4]
-```
+```{code-cell} ipython3
+:tags: [raises-exception]
 
-```
-IndexError: list index out of range
+list_of_students[4]
 ```
 
 You get an **IndexError** because our list only has 4 items (indices 0-3), so index 4 doesn't exist.
@@ -163,33 +156,25 @@ You can use negative indices to count from the end. `list_of_students[-1]` gives
 
 Use the `.append()` method to add an item to the end of a list:
 
-```python
+```{code-cell} ipython3
 list_of_students.append('Sakib')
 list_of_students
-```
-
-```
-['Hermoine', 'Harry', 'Ron', 'Draco', 'Sakib']
 ```
 
 ### Changing Items (Lists are Mutable)
 
 Lists are **mutable**, meaning you can change their contents after creation. Let's replace 'Sakib' with 'Joe':
 
-```python
+```{code-cell} ipython3
 list_of_students[4] = 'Joe'
 list_of_students
-```
-
-```
-['Hermoine', 'Harry', 'Ron', 'Draco', 'Joe']
 ```
 
 ### Iterating Through a List
 
 If we want to print all the student names one by one, we could do this:
 
-```python
+```{code-cell} ipython3
 print(list_of_students[0])
 print(list_of_students[1])
 print(list_of_students[2])
@@ -197,27 +182,11 @@ print(list_of_students[3])
 print(list_of_students[4])
 ```
 
-```
-Hermoine
-Harry
-Ron
-Draco
-Joe
-```
-
 But this is tedious! What if we had 1000 students? Instead, we use a **loop**:
 
-```python
+```{code-cell} ipython3
 for student in list_of_students:
     print(student)
-```
-
-```
-Hermoine
-Harry
-Ron
-Draco
-Joe
 ```
 
 Much better! The `for` loop automatically goes through each item in the list, one at a time. In each iteration, the variable `student` holds the current item.
@@ -226,17 +195,9 @@ Much better! The `for` loop automatically goes through each item in the list, on
 
 What if you want to print both the position and the name? You can combine `range()` with `len()`:
 
-```python
+```{code-cell} ipython3
 for i in range(len(list_of_students)):
     print(i + 1, list_of_students[i])
-```
-
-```
-1 Hermoine
-2 Harry
-3 Ron
-4 Draco
-5 Joe
 ```
 
 Here's what's happening:
@@ -263,7 +224,7 @@ Imagine we want to associate students with their houses at Hogwarts:
 
 We could use two separate lists:
 
-```python
+```{code-cell} ipython3
 students = ["Hermoine", "Harry", "Ron", "Draco"]
 houses = ["Gryffindor", "Gryffindor", "Gryffindor", "Slytherin"]
 ```
@@ -272,7 +233,7 @@ The idea is that `students[0]` corresponds to `houses[0]`, `students[1]` to `hou
 
 A dictionary makes this relationship explicit:
 
-```python
+```{code-cell} ipython3
 students = {
     "Hermoine": "Gryffindor",
     "Harry": "Gryffindor",
@@ -285,20 +246,12 @@ students = {
 
 To get a value from a dictionary, you use its key:
 
-```python
+```{code-cell} ipython3
 print(students['Hermoine'])
 ```
 
-```
-Gryffindor
-```
-
-```python
+```{code-cell} ipython3
 print(students['Draco'])
-```
-
-```
-Slytherin
 ```
 
 Think of it like looking up a word in a real dictionary — you search for the word (key) and get its definition (value).
@@ -307,44 +260,23 @@ Think of it like looking up a word in a real dictionary — you search for the w
 
 You can loop through a dictionary's keys:
 
-```python
+```{code-cell} ipython3
 for name in students:
     print(name)
 ```
 
-```
-Hermoine
-Harry
-Ron
-Draco
-```
-
 Notice this only prints the **keys**. To get the values too:
 
-```python
+```{code-cell} ipython3
 for name in students:
     print(name, students[name])
 ```
 
-```
-Hermoine Gryffindor
-Harry Gryffindor
-Ron Gryffindor
-Draco Slytherin
-```
-
 Let's make the output more readable:
 
-```python
+```{code-cell} ipython3
 for name in students:
     print(name, "lives in", students[name])
-```
-
-```
-Hermoine lives in Gryffindor
-Harry lives in Gryffindor
-Ron lives in Gryffindor
-Draco lives in Slytherin
 ```
 
 ### Adding More Information
@@ -359,7 +291,7 @@ What if we want to store more data about each student — not just their house, 
 
 We can create a **list of dictionaries** — each dictionary represents one student with all their attributes:
 
-```python
+```{code-cell} ipython3
 students_info = [
     {'name': 'Hermoine', 'house': 'Gryffindor', 'gender': 'female'},
     {'name': 'Harry', 'house': 'Gryffindor', 'gender': 'male'},
@@ -369,19 +301,13 @@ students_info = [
 
 Now we have a list called `students_info` containing three dictionaries. Each dictionary has three key-value pairs.
 
-```python
+```{code-cell} ipython3
 for student in students_info:
     print(
-        student['name'], 
-        'lives in', student['house'], 
+        student['name'],
+        'lives in', student['house'],
         'and is', student['gender']
     )
-```
-
-```
-Hermoine lives in Gryffindor and is female
-Harry lives in Gryffindor and is male
-Draco lives in Slytherin and is male
 ```
 
 This structure — a list of dictionaries — is extremely common in data analysis. It's essentially a table where each dictionary is a row, and each key is a column.
@@ -390,34 +316,18 @@ This structure — a list of dictionaries — is extremely common in data analys
 
 To add a new key-value pair, simply assign to a new key:
 
-```python
+```{code-cell} ipython3
 students['sakib'] = 'Winchester'
 students
-```
-
-```
-{'Hermoine': 'Gryffindor',
- 'Harry': 'Gryffindor',
- 'Ron': 'Gryffindor',
- 'Draco': 'Slytherin',
- 'sakib': 'Winchester'}
 ```
 
 ### Changing Values
 
 You can update an existing value the same way:
 
-```python
+```{code-cell} ipython3
 students['Draco'] = 'Winchester'
 students
-```
-
-```
-{'Hermoine': 'Gryffindor',
- 'Harry': 'Gryffindor',
- 'Ron': 'Gryffindor',
- 'Draco': 'Winchester',
- 'sakib': 'Winchester'}
 ```
 
 Draco has transferred to Winchester!
@@ -426,7 +336,7 @@ Draco has transferred to Winchester!
 
 A **tuple** is like a list, but **immutable** — once created, you cannot change it:
 
-```python
+```{code-cell} ipython3
 coordinates = (10, 20)
 ```
 
