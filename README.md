@@ -1,6 +1,6 @@
-# Python Notes 📘
+# Python for Business, Economics & Finance 📘
 
-An interactive online textbook for learning Python for data analysis, designed for the AN7914 Data Analytics and Modelling course at the University of Winchester.
+An online textbook for learning Python for data analysis, designed for the Data Analytics, Quantitative Methods and Statistics, and Data Analysis courses at the University of Winchester.
 
 ## 🌐 View Online
 
@@ -9,8 +9,8 @@ An interactive online textbook for learning Python for data analysis, designed f
 ## ✨ Features
 
 - **Step-by-step tutorials** from Python basics to data analysis
-- **Interactive code cells** — run Python directly in your browser
-- **Auto-checked exercises** with immediate feedback
+- **Executable code cells** — real output rendered in every chapter
+- **Exercises with solutions** — try them yourself, then check the dropdown
 - **Real-world examples** using economic and business datasets
 
 ## 📚 Contents

@@ -1,6 +1,8 @@
-# Welcome to Python Notes
+# Welcome to Python for Business, Economics & Finance
 
-These notes are designed for the **Data Analytics**, **Quantitative Methods and Statistics**, and **Data Analysis** courses at the University of Winchester. Whether you're completely new to programming or brushing up on your skills, this book will guide you step-by-step through Python fundamentals and data analysis techniques.
+This book is designed for the **Data Analytics**, **Quantitative Methods and Statistics**, and **Data Analysis** courses at the University of Winchester. Whether you're completely new to programming or brushing up on your skills, this book will guide you step-by-step through Python fundamentals and data analysis techniques.
+
+**Author:** Sakib Anwar
 
 ## What You'll Learn
 
@@ -19,10 +21,10 @@ By the end of this book, you will be able to:
 Each chapter builds on the previous one. We recommend going through them in order, especially if you're new to programming.
 
 ### 💻 Running Code
-You can run code directly in your browser! Look for the **🚀 Launch** button at the top of each page. Click it to activate live code cells — no installation required.
+The code examples in this book show real output, but the cells are not interactive. To run the code yourself, copy and paste it into [Google Colab](https://colab.research.google.com/) — a free, browser-based Python environment that requires no installation.
 
 ### ✏️ Exercises
-At the end of each chapter, you'll find exercises to test your understanding. These are auto-checked, so you'll get immediate feedback on your answers.
+At the end of each chapter, you'll find exercises to test your understanding. Give each exercise a genuine try before clicking the dropdown to reveal the solution.
 
 ## Prerequisites
 
