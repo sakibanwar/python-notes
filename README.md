@@ -49,8 +49,11 @@ open _build/html/index.html
 
 These notes accompany lectures based on:
 
-> Békés, G., & Kézdi, G. (2021). *Data analysis for business, economics, and policy*. Cambridge University Press.  
+> Békés, G., & Kézdi, G. (2021). *Data analysis for business, economics, and policy*. Cambridge University Press.
 > [gabors-data-analysis.com](https://gabors-data-analysis.com/)
+
+> Diez, D. M., Çetinkaya-Rundel, M., & Barr, C. D. (2019). *OpenIntro Statistics* (4th ed.). OpenIntro, Inc.
+> [openintro.org](https://www.openintro.org/)
 
 ## 🤝 Contributing
 

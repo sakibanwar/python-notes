@@ -36,8 +36,12 @@ No prior programming experience is required. However, you should be comfortable 
 The lecture materials for this course are based on:
 
 > Békés, G., & Kézdi, G. (2021). *Data analysis for business, economics, and policy*. Cambridge University Press.
-> 
+>
 > Website: [gabors-data-analysis.com](https://gabors-data-analysis.com/)
+
+> Diez, D. M., Çetinkaya-Rundel, M., & Barr, C. D. (2019). *OpenIntro Statistics* (4th ed.). OpenIntro, Inc.
+>
+> Website: [openintro.org](https://www.openintro.org/)
 
 ## Let's Get Started!
 
