@@ -9,7 +9,7 @@ kernelspec:
   name: python3
 ---
 
-# Data Structures and Loops
+# Data Structures: Lists and Dictionaries
 
 So far, we've stored information in individual variables:
 

@@ -9,9 +9,9 @@ kernelspec:
   name: python3
 ---
 
-# Conditionals
+# Conditionals and Loops
 
-In this chapter, we're diving into **conditionals** in Python. Conditionals are a fundamental concept in programming, allowing your code to make decisions based on certain criteria. This enables your programs to respond differently to different inputs or situations, making your code more dynamic and versatile.
+In this chapter, we're diving into **conditionals** and **loops** in Python. Conditionals are a fundamental concept in programming, allowing your code to make decisions based on certain criteria. Loops let you repeat actions multiple times. Together, these enable your programs to respond differently to different inputs or situations, making your code more dynamic and versatile.
 
 ## Understanding Comparison Operators
 
