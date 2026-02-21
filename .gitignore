@@ -1,5 +1,7 @@
 # Jupyter Book build output
 _build/
+_build_stats/
+_site/
 
 # Python
 __pycache__/

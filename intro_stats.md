@@ -1,6 +1,6 @@
-# Welcome to Python for Business, Economics & Finance
+# Welcome to Python for Statistics & Quantitative Methods
 
-This book is designed for the **Data Analytics**, **Quantitative Methods and Statistics**, and **Data Analysis** courses at the University of Winchester. Whether you're completely new to programming or brushing up on your skills, this book will guide you step-by-step through Python fundamentals and data analysis techniques.
+This book is designed for the **Quantitative Methods and Statistics** course at the University of Winchester. Whether you're completely new to programming or brushing up on your skills, this book will guide you step-by-step through Python fundamentals, data analysis, and statistical inference.
 
 **Author:** Sakib Anwar
 
@@ -12,18 +12,22 @@ By the end of this book, you will be able to:
 - Work with data structures like lists and dictionaries
 - Load, clean, and manipulate data using pandas
 - Create visualisations with seaborn and matplotlib
-- Perform hypothesis testing and regression analysis
+- Understand the normal distribution, sampling, and the Central Limit Theorem
+- Construct and interpret confidence intervals
+- Perform hypothesis testing (z-tests and t-tests)
+- Run and interpret simple and multiple regression models
+- Diagnose regression model assumptions
 - Build interactive dashboards with Streamlit
 
 ## How to Use This Book
 
-### 📖 Reading
+### Reading
 Each chapter builds on the previous one. We recommend going through them in order, especially if you're new to programming.
 
-### 💻 Running Code
+### Running Code
 The code examples in this book show real output, but the cells are not interactive. To run the code yourself, copy and paste it into [Google Colab](https://colab.research.google.com/) — a free, browser-based Python environment that requires no installation.
 
-### ✏️ Exercises
+### Exercises
 At the end of each chapter, you'll find exercises to test your understanding. Give each exercise a genuine try before clicking the dropdown to reveal the solution.
 
 ## Prerequisites
@@ -52,7 +56,7 @@ Ready to write your first Python program? Head to [Chapter 1: Getting Started wi
 ---
 
 ```{note}
-Looking for the Statistics & Quantitative Methods version? [Click here](stats/intro.html).
+Looking for the Data Analysis version of this book? [Click here](../intro.html).
 
 If you find any errors or have suggestions for improvement, please open an issue on [GitHub](https://github.com/sakibanwar/python-notes/issues).
 ```

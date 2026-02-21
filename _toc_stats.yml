@@ -1,0 +1,28 @@
+# Table of contents — Intro to Stats version
+format: jb-book
+root: intro_stats
+chapters:
+  - file: chapters/01_getting_started
+    title: "1. Getting Started with Python"
+  - file: chapters/02_conditionals
+    title: "2. Conditionals"
+  - file: chapters/03_data_structures
+    title: "3. Data Structures and Loops"
+  - file: chapters/04_intro_pandas
+    title: "4. Introduction to Pandas"
+  - file: chapters/05_data_viz_stats
+    title: "5. Data Visualisation with Seaborn"
+  - file: chapters/06_filtering_stats
+    title: "6. Filtering Data"
+  - file: chapters/07_grouping
+    title: "7. Grouping and Aggregating"
+  - file: chapters/08_data_cleaning
+    title: "8. Data Cleaning"
+  - file: chapters/09_statistical_inference
+    title: "9. Statistical Inference"
+  - file: chapters/10_exploratory_analysis
+    title: "10. Exploratory Analysis"
+  - file: chapters/11_regression_stats
+    title: "11. Introduction to Regression"
+  - file: chapters/12_dashboards
+    title: "12. Creating Dashboards with Streamlit"

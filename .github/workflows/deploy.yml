@@ -34,21 +34,29 @@ jobs:
           pip install -r requirements.txt
           jupyter-book --version
 
-      - name: Build the book
+      - name: Build DA book
         run: |
-          jupyter-book build . 2>&1 | tee build.log
-          echo "=== Build log ==="
-          cat build.log
-          echo "=== Checking _build directory ==="
-          ls -la _build/ || echo "_build directory does not exist"
-          ls -la _build/html/ || echo "_build/html directory does not exist"
-          echo "=== Files in _build/html ==="
-          find _build/html -type f | head -20 || echo "No files found"
+          jupyter-book build . 2>&1 | tee build_da.log
+          echo "=== DA build complete ==="
+
+      - name: Build Stats book
+        run: |
+          jupyter-book build . --toc _toc_stats.yml --config _config_stats.yml --path-output _build_stats 2>&1 | tee build_stats.log
+          echo "=== Stats build complete ==="
+
+      - name: Combine builds into single site
+        run: |
+          mkdir -p _site
+          cp -r _build/html/* _site/
+          mkdir -p _site/stats
+          cp -r _build_stats/_build/html/* _site/stats/
+          echo "=== Combined site structure ==="
+          find _site -maxdepth 3 -type f | head -30
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_build/html'
+          path: '_site'
 
   deploy:
     environment:
