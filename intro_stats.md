@@ -55,8 +55,12 @@ Ready to write your first Python program? Head to [Chapter 1: Getting Started wi
 
 ---
 
-```{note}
-Looking for the Data Analysis version of this book? [Click here](../intro.html).
+```{admonition} Other Versions
+:class: tip
 
+Looking for the **Data Analysis** version of this book? <a href="../intro.html">Click here</a>.
+```
+
+```{note}
 If you find any errors or have suggestions for improvement, please open an issue on [GitHub](https://github.com/sakibanwar/python-notes/issues).
 ```

@@ -51,8 +51,12 @@ Ready to write your first Python program? Head to [Chapter 1: Getting Started wi
 
 ---
 
-```{note}
-Looking for the Statistics & Quantitative Methods version? [Click here](stats/intro_stats.html).
+```{admonition} Other Versions
+:class: tip
 
+Looking for the **Statistics & Quantitative Methods** version of this book? <a href="stats/intro_stats.html">Click here</a>.
+```
+
+```{note}
 If you find any errors or have suggestions for improvement, please open an issue on [GitHub](https://github.com/sakibanwar/python-notes/issues).
 ```
