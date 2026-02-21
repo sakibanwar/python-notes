@@ -1,10 +1,9 @@
-# Book settings
-title: Python for Business, Economics & Finance
+# Book settings — Intro to Stats version
+title: Python for Statistics & Quantitative Methods
 author: Sakib Anwar
 copyright: "2024"
-# logo: _static/logo.png  # Uncomment when you add a logo
 
-# Exclude files from the build
+# Exclude files from the build (DA-specific files excluded)
 exclude_patterns:
   - CLAUDE.md
   - README.md
@@ -12,23 +11,24 @@ exclude_patterns:
   - _build_stats
   - Thumbs.db
   - .DS_Store
+  - _toc.yml
   - _toc_stats.yml
   - _config_stats.yml
-  - intro_stats.md
-  - chapters/05_data_viz_stats.md
-  - chapters/06_filtering_stats.md
-  - chapters/09_statistical_inference.md
-  - chapters/11_regression_stats.md
+  - intro.md
+  - chapters/05_data_viz.md
+  - chapters/06_filtering.md
+  - chapters/09_hypothesis_testing.md
+  - chapters/11_regression.md
 
 # Execute notebooks on build to show outputs
 execute:
-  execute_notebooks: 'auto'  # Execute notebooks that have no outputs
-  timeout: 120  # Timeout in seconds for each cell
+  execute_notebooks: 'auto'
+  timeout: 120
 
 # Define the name of the latex output file for PDF builds
 latex:
   latex_documents:
-    targetname: python-notes.tex
+    targetname: python-notes-stats.tex
 
 # Add a bibtex file so that we can create citations
 bibtex_bibfiles:
