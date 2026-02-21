@@ -181,18 +181,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import ttest_ind, ttest_1samp
 
-# Set seed for reproducibility
-np.random.seed(42)
-
-# Create employee satisfaction survey data
-survey = pd.DataFrame({
-    'employee_id': range(1, 101),
-    'department': ['Sales'] * 50 + ['Marketing'] * 50,
-    'satisfaction': np.concatenate([
-        np.random.normal(6.5, 1.5, 50),  # Sales: mean ~6.5
-        np.random.normal(7.2, 1.4, 50)   # Marketing: mean ~7.2
-    ]).clip(1, 10).round(1)
-})
+# Load employee satisfaction survey data
+# 100 employees from Sales and Marketing departments, rated satisfaction on a 1-10 scale
+survey = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/employee_survey.csv")
 
 survey.head(10)
 ```
@@ -336,10 +327,10 @@ Common misconceptions:
 A statistically significant result isn't necessarily practically important. Consider:
 
 ```python
-# Large sample with tiny difference
-np.random.seed(123)
-group_1 = np.random.normal(100, 15, 10000)  # Mean = 100
-group_2 = np.random.normal(100.5, 15, 10000)  # Mean = 100.5
+# Large sample with tiny difference — 10,000 observations per group
+stat_practical = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/stat_vs_practical.csv")
+group_1 = stat_practical[stat_practical['group'] == 'Group A']['score'].values
+group_2 = stat_practical[stat_practical['group'] == 'Group B']['score'].values
 
 t_stat, p_value = ttest_ind(group_1, group_2)
 print(f"Difference in means: {group_2.mean() - group_1.mean():.2f}")
@@ -718,11 +709,12 @@ print("\nNote: The sign of t indicates direction (positive = sample > comparison
 You have sales data from two regions and want to determine if there's a significant difference in average transaction values:
 
 ```python
-import numpy as np
-np.random.seed(42)
+import pandas as pd
 
-region_north = np.random.normal(85, 15, 30).round(2)  # 30 transactions
-region_south = np.random.normal(92, 18, 35).round(2)  # 35 transactions
+# Load regional sales data — 65 transactions from North and South regions
+regional_sales = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/regional_sales.csv")
+region_north = regional_sales[regional_sales['region'] == 'North']['sales'].values
+region_south = regional_sales[regional_sales['region'] == 'South']['sales'].values
 ```
 
 Complete a full hypothesis testing workflow:
@@ -737,12 +729,14 @@ Complete a full hypothesis testing workflow:
 :class: dropdown
 
 ```python
+import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind
 
-np.random.seed(42)
-region_north = np.random.normal(85, 15, 30).round(2)
-region_south = np.random.normal(92, 18, 35).round(2)
+# Load the regional sales data
+regional_sales = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/regional_sales.csv")
+region_north = regional_sales[regional_sales['region'] == 'North']['sales'].values
+region_south = regional_sales[regional_sales['region'] == 'South']['sales'].values
 
 print("="*60)
 print("SALES ANALYSIS: NORTH vs SOUTH REGIONS")
@@ -783,3 +777,73 @@ else:
 print("="*60)
 ```
 ````
+
+---
+
+## Appendix: How the Datasets Were Created
+
+The datasets used in this chapter were generated using Python's `numpy.random` module. This appendix shows how each one was created, so you can understand the underlying data and learn how to simulate your own datasets for practice.
+
+### Employee Satisfaction Survey (`employee_survey.csv`)
+
+This dataset contains 100 employees from two departments (Sales and Marketing), each with a satisfaction score on a 1-10 scale. Sales employees were generated with a slightly lower average satisfaction than Marketing employees.
+
+```python
+import numpy as np
+import pandas as pd
+
+np.random.seed(42)  # Makes results reproducible
+
+survey = pd.DataFrame({
+    'employee_id': range(1, 101),
+    'department': ['Sales'] * 50 + ['Marketing'] * 50,
+    'satisfaction': np.concatenate([
+        np.random.normal(6.5, 1.5, 50),   # Sales: mean ~6.5, SD 1.5
+        np.random.normal(7.2, 1.4, 50)    # Marketing: mean ~7.2, SD 1.4
+    ]).clip(1, 10).round(1)                # Keep scores between 1 and 10
+})
+
+survey.to_csv('employee_survey.csv', index=False)
+```
+
+**What's happening here:**
+- `np.random.seed(42)` ensures you get the same "random" numbers every time you run it — useful for reproducibility
+- `np.random.normal(6.5, 1.5, 50)` generates 50 random numbers from a normal distribution with mean 6.5 and standard deviation 1.5
+- `.clip(1, 10)` ensures no values fall outside the 1-10 scale
+- `.round(1)` rounds to 1 decimal place
+
+### Statistical vs Practical Significance (`stat_vs_practical.csv`)
+
+This dataset demonstrates that large samples can detect tiny, practically meaningless differences. Two groups of 10,000 observations each, with means that differ by only 0.5 points.
+
+```python
+np.random.seed(123)
+
+stat_practical = pd.DataFrame({
+    'group': ['Group A'] * 10000 + ['Group B'] * 10000,
+    'score': np.concatenate([
+        np.random.normal(100, 15, 10000),    # Group A: mean 100
+        np.random.normal(100.5, 15, 10000)   # Group B: mean 100.5
+    ]).round(2)
+})
+
+stat_practical.to_csv('stat_vs_practical.csv', index=False)
+```
+
+### Regional Sales (`regional_sales.csv`)
+
+This dataset contains transaction values from two sales regions — 30 transactions from the North and 35 from the South.
+
+```python
+np.random.seed(42)
+
+regional_sales = pd.DataFrame({
+    'region': ['North'] * 30 + ['South'] * 35,
+    'sales': np.concatenate([
+        np.random.normal(85, 15, 30).round(2),   # North: mean $85
+        np.random.normal(92, 18, 35).round(2)     # South: mean $92
+    ])
+})
+
+regional_sales.to_csv('regional_sales.csv', index=False)
+```

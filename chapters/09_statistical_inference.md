@@ -322,9 +322,9 @@ and t* comes from the t-distribution with n-1 degrees of freedom.
 #### Example: Average Birth Weight
 
 ```python
-# Suppose we have birth weights from 50 babies
-np.random.seed(42)
-weights = np.random.normal(7.0, 1.5, 50)
+# Birth weights from a sample of 50 babies (in pounds)
+birth_sample = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/birth_weights_sample.csv")
+weights = birth_sample['weight_lbs'].values
 
 # Step 1: Calculate sample statistics
 x_bar = weights.mean()
@@ -564,10 +564,10 @@ The good news: Python has a built-in function for this, so you don't need to cal
 ```python
 from scipy.stats import ttest_ind
 
-# Example: birth weights for smokers vs nonsmokers
-np.random.seed(42)
-nonsmoker_weights = np.random.normal(7.2, 1.3, 800)  # Mean = 7.2 lbs
-smoker_weights = np.random.normal(6.7, 1.5, 200)     # Mean = 6.7 lbs
+# Birth weight data: 800 nonsmokers and 200 smokers
+births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
+nonsmoker_weights = births[births['habit'] == 'nonsmoker']['weight_lbs'].values
+smoker_weights = births[births['habit'] == 'smoker']['weight_lbs'].values
 
 # First, let's see the descriptive statistics
 print(f"Nonsmoker mean weight: {nonsmoker_weights.mean():.3f} lbs")
@@ -659,10 +659,10 @@ We've been focused on p-values and statistical significance. But here's somethin
 Why? Because with a very large sample, even *tiny* differences become statistically significant. Watch what happens:
 
 ```python
-# Large sample with tiny difference
-np.random.seed(123)
-group_1 = np.random.normal(100, 15, 10000)    # Mean = 100
-group_2 = np.random.normal(100.5, 15, 10000)  # Mean = 100.5
+# Large sample with tiny difference — 10,000 observations per group
+stat_practical = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/stat_vs_practical.csv")
+group_1 = stat_practical[stat_practical['group'] == 'Group A']['score'].values
+group_2 = stat_practical[stat_practical['group'] == 'Group B']['score'].values
 
 t_stat, p_value = ttest_ind(group_1, group_2)
 print(f"Difference in means: {group_2.mean() - group_1.mean():.2f}")
@@ -809,14 +809,9 @@ def inference_workflow(data, group_col, value_col, alpha=0.05):
     print("=" * 55)
     return t_stat, p_value
 
-# Example usage
-births = pd.DataFrame({
-    'weight': np.concatenate([
-        np.random.normal(7.2, 1.3, 800),
-        np.random.normal(6.7, 1.5, 200)
-    ]),
-    'habit': ['nonsmoker'] * 800 + ['smoker'] * 200
-})
+# Example usage — load the births data
+births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
+births = births.rename(columns={'weight_lbs': 'weight'})  # Match expected column name
 
 inference_workflow(births, 'habit', 'weight')
 ```
@@ -1049,11 +1044,12 @@ print(f"   (78% vs 65%, z = {z_stat:.2f}, p = {p_value:.4f}).")
 A company tested two versions of a website (A and B) to see which generates more time on page. The results (in seconds) are:
 
 ```python
-import numpy as np
-np.random.seed(42)
+import pandas as pd
 
-version_A = np.random.normal(120, 30, 40)  # 40 visitors, mean ~120 seconds
-version_B = np.random.normal(135, 35, 45)  # 45 visitors, mean ~135 seconds
+# A/B test data — time spent on page (seconds) for two website versions
+ab_test = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/ab_test_website.csv")
+version_A = ab_test[ab_test['version'] == 'A']['time_on_page_seconds'].values  # 40 visitors
+version_B = ab_test[ab_test['version'] == 'B']['time_on_page_seconds'].values  # 45 visitors
 ```
 
 1. Calculate descriptive statistics for both groups
@@ -1066,12 +1062,14 @@ version_B = np.random.normal(135, 35, 45)  # 45 visitors, mean ~135 seconds
 :class: dropdown
 
 ```python
+import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind
 
-np.random.seed(42)
-version_A = np.random.normal(120, 30, 40)
-version_B = np.random.normal(135, 35, 45)
+# Load the A/B test data
+ab_test = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/ab_test_website.csv")
+version_A = ab_test[ab_test['version'] == 'A']['time_on_page_seconds'].values
+version_B = ab_test[ab_test['version'] == 'B']['time_on_page_seconds'].values
 
 # 1. Descriptive statistics
 print("1. DESCRIPTIVE STATISTICS")
@@ -1126,3 +1124,87 @@ print(f"   - For a news article: probably not meaningful enough to matter")
 
 Note: The result is borderline (p = 0.056). With more data, this might become significant. This illustrates why we should consider both statistical and practical significance.
 ````
+
+---
+
+## Appendix: How the Datasets Were Created
+
+The datasets used in this chapter were generated using Python's `numpy.random` module to simulate realistic data. This appendix explains how each was created, so you can understand the data and learn how to simulate your own.
+
+### Birth Weights Sample (`birth_weights_sample.csv`)
+
+A sample of 50 baby birth weights (in pounds), drawn from a normal distribution with a mean of 7.0 lbs and standard deviation of 1.5 lbs.
+
+```python
+import numpy as np
+import pandas as pd
+
+np.random.seed(42)  # Makes results reproducible
+
+weights = pd.DataFrame({
+    'weight_lbs': np.random.normal(7.0, 1.5, 50).round(2)
+})
+
+weights.to_csv('birth_weights_sample.csv', index=False)
+```
+
+**What's happening:**
+- `np.random.seed(42)` ensures you get the same "random" numbers every time — this is called **reproducibility**
+- `np.random.normal(7.0, 1.5, 50)` draws 50 values from a normal distribution with mean 7.0 and standard deviation 1.5
+- `.round(2)` rounds to 2 decimal places
+
+### Births and Smoking (`births_smoking.csv`)
+
+A dataset of 1,000 births — 800 from nonsmoking mothers and 200 from smoking mothers. Nonsmokers' babies have a slightly higher mean birth weight.
+
+```python
+np.random.seed(42)
+
+births = pd.DataFrame({
+    'weight_lbs': np.concatenate([
+        np.random.normal(7.2, 1.3, 800),   # Nonsmokers: mean 7.2 lbs, SD 1.3
+        np.random.normal(6.7, 1.5, 200)    # Smokers: mean 6.7 lbs, SD 1.5
+    ]).round(2),
+    'habit': ['nonsmoker'] * 800 + ['smoker'] * 200
+})
+
+births.to_csv('births_smoking.csv', index=False)
+```
+
+**Why these numbers?** Research consistently shows that babies born to smoking mothers tend to weigh less on average. The 0.5 lb difference and the sample sizes here are inspired by real studies, though the specific values are simulated.
+
+### Statistical vs Practical Significance (`stat_vs_practical.csv`)
+
+Two groups of 10,000 observations each, where the means differ by only 0.5 points. This demonstrates that with a very large sample, even a trivially small difference can be "statistically significant."
+
+```python
+np.random.seed(123)
+
+stat_practical = pd.DataFrame({
+    'group': ['Group A'] * 10000 + ['Group B'] * 10000,
+    'score': np.concatenate([
+        np.random.normal(100, 15, 10000),    # Group A: mean 100, SD 15
+        np.random.normal(100.5, 15, 10000)   # Group B: mean 100.5, SD 15
+    ]).round(2)
+})
+
+stat_practical.to_csv('stat_vs_practical.csv', index=False)
+```
+
+### A/B Test Website Data (`ab_test_website.csv`)
+
+Time spent on a webpage (in seconds) for two versions of a website — 40 visitors saw Version A, 45 saw Version B.
+
+```python
+np.random.seed(42)
+
+ab_test = pd.DataFrame({
+    'version': ['A'] * 40 + ['B'] * 45,
+    'time_on_page_seconds': np.concatenate([
+        np.random.normal(120, 30, 40).round(2),   # Version A: mean ~120 seconds
+        np.random.normal(135, 35, 45).round(2)    # Version B: mean ~135 seconds
+    ])
+})
+
+ab_test.to_csv('ab_test_website.csv', index=False)
+```

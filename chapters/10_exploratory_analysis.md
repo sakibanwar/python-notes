@@ -48,10 +48,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load the Billion Prices Project data
-bpp = pd.read_csv("https://osf.io/yhbr5/download", encoding="latin-1")
+bpp = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/billion_prices.csv", encoding="latin-1")
 ```
 
-```{note}
+```{tip}
+You can also [download the dataset](https://github.com/sakibanwar/python-notes/tree/main/data) and load it locally:
+
+    bpp = pd.read_csv("billion_prices.csv", encoding="latin-1")
+
 The `encoding="latin-1"` parameter handles special characters in international data. Without it, you might get encoding errors.
 ```
 

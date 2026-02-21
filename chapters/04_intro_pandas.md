@@ -123,15 +123,21 @@ In the real world, you won't type your data manually. Instead, you'll load it fr
 
 ### Reading a CSV File
 
-Use `pd.read_csv()` to load a CSV file:
+Use `pd.read_csv()` to load a CSV file. You can load it directly from the book's GitHub repository:
 
 ```{code-cell} ipython3
-employee = pd.read_csv('../data/employee_dataset.csv')
+employee = pd.read_csv('https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/employee_dataset.csv')
 ```
 
-The argument can be:
-- A **file path** on your computer: `'C:/Users/data/employees.csv'`
-- A **URL** to a file online: `'https://example.com/data.csv'`
+```{tip}
+You can also download the CSV file from [GitHub](https://github.com/sakibanwar/python-notes/tree/main/data) and load it from your computer:
+
+    employee = pd.read_csv('employee_dataset.csv')
+```
+
+The argument to `pd.read_csv()` can be:
+- A **file path** on your computer: `'employee_dataset.csv'`
+- A **URL** to a file online: `'https://raw.githubusercontent.com/...'`
 
 Let's look at the data:
 

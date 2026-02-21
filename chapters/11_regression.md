@@ -39,7 +39,13 @@ import seaborn as sns
 import statsmodels.formula.api as smf
 
 # Load the Vienna hotels data
-hotels = pd.read_csv("https://osf.io/y6jvb/download")
+hotels = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/vienna_hotels.csv")
+```
+
+```{tip}
+You can also [download the dataset](https://github.com/sakibanwar/python-notes/tree/main/data) and load it locally:
+
+    hotels = pd.read_csv("vienna_hotels.csv")
 ```
 
 ```python
@@ -629,7 +635,7 @@ Here's a complete workflow for running a regression analysis:
 
 ```python
 # 1. Load and prepare data
-hotels = pd.read_csv("https://osf.io/y6jvb/download")
+hotels = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/vienna_hotels.csv")
 hotels = hotels[hotels["accommodation_type"] == "Hotel"]
 hotels = hotels[hotels["price"] <= 600]
 
