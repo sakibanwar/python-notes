@@ -11,7 +11,7 @@ This textbook is published in two versions:
 | **Data Analysis** | Data Analytics / Data Analysis | [Read the DA book](https://sakibanwar.github.io/python-notes/) |
 | **Statistics & Quantitative Methods** | Quantitative Methods and Statistics | [Read the Stats book](https://sakibanwar.github.io/python-notes/stats/) |
 
-Both versions share the same Python fundamentals (Chapters 1-4, 7-8, 10, 12). The Stats version has expanded content on data visualisation, filtering, statistical inference, and regression.
+Both versions share most chapters. The Stats version has expanded content in **data visualisation** (Ch 5), **filtering** (Ch 6), and a **different regression case study** (Ch 14); everything else is identical.
 
 ## Features
 
@@ -22,20 +22,23 @@ Both versions share the same Python fundamentals (Chapters 1-4, 7-8, 10, 12). Th
 
 ## Contents
 
-| Ch | Data Analysis | Stats & QM |
-|----|--------------|------------|
-| 1 | Getting Started with Python | Getting Started with Python |
-| 2 | Conditionals | Conditionals |
-| 3 | Data Structures and Loops | Data Structures and Loops |
-| 4 | Introduction to Pandas | Introduction to Pandas |
-| 5 | Data Visualisation with Seaborn | Data Visualisation with Seaborn *(expanded)* |
-| 6 | Filtering Data | Filtering Data *(expanded)* |
-| 7 | Grouping and Aggregating | Grouping and Aggregating |
-| 8 | Data Cleaning | Data Cleaning |
-| 9 | Hypothesis Testing | Statistical Inference *(rewritten)* |
-| 10 | Exploratory Analysis | Exploratory Analysis |
-| 11 | Introduction to Regression | Introduction to Regression *(expanded)* |
-| 12 | Creating Dashboards with Streamlit | Creating Dashboards with Streamlit |
+| Ch | Topic | Notes |
+|----|-------|-------|
+| 1  | Getting Started with Python | shared |
+| 2  | Conditionals and Loops | shared |
+| 3  | Data Structures: Lists and Dictionaries | shared |
+| 4  | Introduction to Pandas | shared |
+| 5  | Data Visualisation with Seaborn | Stats version expanded |
+| 6  | Filtering Data | Stats version expanded |
+| 7  | Grouping and Aggregating | shared |
+| 8  | Data Cleaning | shared |
+| 9  | Statistical Inference: Foundation (Normal, CLT, CIs) | shared |
+| 10 | Statistical Inference: Hypothesis Testing | shared |
+| 11 | Exploratory Analysis | shared |
+| 12 | Introduction to Regression (Wooldridge `wage1`) | shared |
+| 13 | Exporting Results to Word and Excel (Stargazer) | shared |
+| 14 | Regression Analysis: A Case Study (Vienna hotels) | DA and Stats variants |
+| 15 | Creating Dashboards with Streamlit | shared |
 
 ## Building Locally
 
