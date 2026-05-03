@@ -71,6 +71,47 @@ The decision is straightforward — compare the p-value to your chosen significa
 | p < α | Reject H₀ | Evidence of a difference (statistically significant) |
 | p ≥ α | Fail to reject H₀ | No evidence of a difference |
 
+Visually, this is what the **rejection region** looks like for a two-tailed test at α = 0.05. If our test statistic lands in either red tail, we reject H₀; if it lands anywhere in the blue middle, we fail to reject:
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
+x = np.linspace(-4, 4, 400)
+y = stats.norm.pdf(x)
+z_critical = 1.96
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(x, y, color='steelblue', linewidth=2)
+
+# Fail-to-reject region (middle)
+ax.fill_between(x, y, where=(x >= -z_critical) & (x <= z_critical),
+                alpha=0.25, color='steelblue', label='Fail to reject H₀ (95%)')
+
+# Rejection regions (tails)
+ax.fill_between(x, y, where=(x <= -z_critical),
+                alpha=0.6, color='crimson', label='Reject H₀ (5% total: 2.5% + 2.5%)')
+ax.fill_between(x, y, where=(x >= z_critical),
+                alpha=0.6, color='crimson')
+
+# Critical-value lines
+ax.axvline(x=-z_critical, color='crimson', linestyle='--', alpha=0.7)
+ax.axvline(x=z_critical, color='crimson', linestyle='--', alpha=0.7)
+
+# Critical-value labels
+ax.text(-z_critical, -0.025, "−" + str(z_critical), ha='center', color='crimson', fontsize=11)
+ax.text(z_critical, -0.025, "+" + str(z_critical), ha='center', color='crimson', fontsize=11)
+
+ax.set_xlabel('Test statistic (z)')
+ax.set_ylabel('Density (under H₀)')
+ax.set_title('Rejection region for a two-tailed test at α = 0.05')
+ax.legend(loc='upper right')
+ax.set_ylim(-0.04, 0.45)
+plt.tight_layout()
+plt.show()
+```
+
+Two things to notice. First, the **rejection region** is just the 5% of the area split between the two tails (2.5% in each). Second, the cutoff values **±1.96** are the same z-scores we computed in Chapter 9 with `stats.norm.ppf(0.975)` — we'll use them constantly.
+
 ```{warning}
 **"Fail to reject H₀" is NOT the same as "accept H₀"!** This is one of the most common mistakes in statistics. We never prove the null hypothesis is true — we just don't have enough evidence to reject it. It's like saying "not guilty" in court — it doesn't mean "innocent", just that the evidence wasn't strong enough.
 ```
@@ -135,44 +176,59 @@ print("Difference:", round(p2 - p1, 4))
 ```
 
 
-So smokers have a 21.0% premature rate compared to 13.8% for nonsmokers — a 7.25 percentage point difference. But is this difference *statistically significant*, or could it just be due to random variation? Let's find out:
+So smokers have a 21.0% premature rate compared to 13.8% for nonsmokers — a 7.25 percentage-point difference. But is this difference *statistically significant*, or could it just be sampling noise? Let's work through the test step by step.
+
+**Step 1 — Pooled proportion.** Under H₀ both groups share the same true proportion, so our best estimate of that common proportion combines all the data:
 
 ```{code-cell} ipython3
-# Step 1: Calculate pooled proportion
 p_pool = (x1 + x2) / (n1 + n2)
-print("Pooled proportion: ", round(p_pool, 4))
+print("Pooled proportion:", round(p_pool, 4))
+```
 
-# Step 2: Calculate standard error
+**Step 2 — Standard error.** This measures how much the *difference* between the two sample proportions would jiggle from sample to sample, if H₀ were true:
+
+```{code-cell} ipython3
 se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
-print("Standard error: ", round(se, 4))
+print("Standard error:", round(se, 4))
+```
 
-# Step 3: Calculate z-statistic
+**Step 3 — Z-statistic.** Now we ask: *how many standard errors is the observed difference (p₁ − p₂) away from zero?*
+
+```{code-cell} ipython3
 z_stat = (p1 - p2) / se
-print("z-statistic: ", round(z_stat, 4))
+print("z-statistic:", round(z_stat, 4))
+```
 
-# Step 4: Calculate p-value (two-tailed)
+A z-statistic of −2.51 means the observed difference is about 2.5 SEs below zero — well outside the ±1.96 cutoff we just plotted. That already hints at a rejection.
+
+**Step 4 — p-value.** The p-value is the probability of seeing a difference at least this extreme in *either direction* if H₀ were true. Since we're doing a two-tailed test, we double the upper-tail area:
+
+```{code-cell} ipython3
 p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-print("p-value: ", round(p_value, 4))
+print("p-value:", round(p_value, 4))
+```
 
-# Step 5: Make decision
+**Step 5 — Decision.** Compare the p-value to α = 0.05:
+
+```{code-cell} ipython3
 alpha = 0.05
+
 if p_value < alpha:
-    print("\nSince p-value (", round(p_value, 4), ") < α (", alpha, "): REJECT H₀")
+    print("p-value", round(p_value, 4), "< α", alpha, ": REJECT H₀")
     print("There IS a significant difference in premature birth rates.")
 else:
-    print("\nSince p-value (", round(p_value, 4), ") >= α (", alpha, "): FAIL TO REJECT H₀")
+    print("p-value", round(p_value, 4), ">= α", alpha, ": FAIL TO REJECT H₀")
     print("No significant difference in premature birth rates.")
 ```
 
-
 Let's make sure we understand what just happened:
 
-1. We calculated the **pooled proportion** (0.152) — the overall premature rate assuming no difference
-2. We calculated the **standard error** (0.029) — how much the difference would vary by chance
-3. The **z-statistic** (-2.51) tells us the observed difference is 2.51 standard errors away from zero
-4. The **p-value** (0.012) tells us: if there truly were no difference, we'd see a gap this large only 1.2% of the time
+1. The **pooled proportion** (≈ 0.152) is the overall premature rate assuming no group difference.
+2. The **standard error** (≈ 0.029) is how much the difference would vary by chance.
+3. The **z-statistic** (−2.51) says the observed difference is 2.51 standard errors below zero.
+4. The **p-value** (0.012) says: if there really were no difference, we'd see a gap this large only 1.2% of the time.
 
-Since 1.2% is less than our threshold of 5%, we conclude: the evidence suggests smokers have a significantly higher rate of premature births (p = 0.012).
+Since 1.2% is well below 5%, we conclude that smokers have a significantly higher rate of premature births (p = 0.012).
 
 ### Putting It in a Reusable Function
 
@@ -196,11 +252,11 @@ def z_test_two_proportions(x1, n1, x2, n2, alpha=0.05):
     z_stat = (p1 - p2) / se
     p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
 
-    print("Group 1: ", x1, "/", n1, " = ", round(p1, 4))
-    print("Group 2: ", x2, "/", n2, " = ", round(p2, 4))
-    print("Pooled proportion: ", round(p_pool, 4))
-    print("z-statistic: ", round(z_stat, 4))
-    print("p-value: ", round(p_value, 4))
+    print("Group 1:", x1, "/", n1, " = ", round(p1, 4))
+    print("Group 2:", x2, "/", n2, " = ", round(p2, 4))
+    print("Pooled proportion:", round(p_pool, 4))
+    print("z-statistic:", round(z_stat, 4))
+    print("p-value:", round(p_value, 4))
 
     if p_value < alpha:
         print("\nReject H₀ at α = ", alpha, ": significant difference")
@@ -223,79 +279,76 @@ The z-test compared **proportions**. But what if you want to compare **means** �
 
 ### Using `scipy.stats.ttest_ind()`
 
-The good news: Python has a built-in function for this, so you don't need to calculate everything by hand:
+Python has a built-in function for this, so we don't need to compute the t-statistic by hand. Let's work through it step by step.
+
+**Step 1 — Load the data and split by group.** The dataset is in tidy format: one row per baby, with a `habit` column that tells us the group. Splitting it is just the boolean-filter pattern from Chapter 6:
 
 ```{code-cell} ipython3
 from scipy.stats import ttest_ind
 
-# Birth weight data: 800 nonsmokers and 200 smokers
 births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
-nonsmoker_weights = births[births['habit'] == 'nonsmoker']['weight_lbs'].values
-smoker_weights = births[births['habit'] == 'smoker']['weight_lbs'].values
-
-# First, let's see the descriptive statistics
-print("Nonsmoker mean weight: ", round(nonsmoker_weights.mean(), 3), " lbs")
-print("Smoker mean weight:    ", round(smoker_weights.mean(), 3), " lbs")
-print("Difference:            ", round(nonsmoker_weights.mean() - smoker_weights.mean(), 3), " lbs")
+births.head()
 ```
-
-
-There's a half-pound difference. Is it statistically significant?
 
 ```{code-cell} ipython3
-# Perform two-sample t-test (Welch's t-test by default)
-t_stat, p_value = ttest_ind(nonsmoker_weights, smoker_weights)
+# Split into the two groups using boolean filtering
+nonsmoker_weights = births[births['habit'] == 'nonsmoker']['weight_lbs'].values
+smoker_weights    = births[births['habit'] == 'smoker']['weight_lbs'].values
 
-print("\nt-statistic: ", round(t_stat, 4))
-print("p-value: ", round(p_value, 4))
-
-if p_value < 0.05:
-    print("\nReject H₀: The difference in birth weights IS statistically significant.")
-else:
-    print("\nFail to reject H₀: No significant difference in birth weights.")
+print("Nonsmokers: n =", len(nonsmoker_weights))
+print("Smokers:    n =", len(smoker_weights))
 ```
 
+**Step 2 — Eyeball the difference.** Before running any test, look at the means:
 
-The p-value is essentially 0 — the difference is highly significant.
+```{code-cell} ipython3
+print("Nonsmoker mean weight:", round(nonsmoker_weights.mean(), 3), "lbs")
+print("Smoker mean weight:   ", round(smoker_weights.mean(), 3), "lbs")
+print("Difference:           ", round(nonsmoker_weights.mean() - smoker_weights.mean(), 3), "lbs")
+```
+
+There's about a half-pound difference. The question is whether it's statistically significant.
+
+**Step 3 — Run the t-test.** A single function call gives us the t-statistic and the p-value:
+
+```{code-cell} ipython3
+t_stat, p_value = ttest_ind(nonsmoker_weights, smoker_weights)
+
+print("t-statistic:", round(t_stat, 4))
+print("p-value:    ", round(p_value, 4))
+```
+
+**Step 4 — Decide.** Compare the p-value to α = 0.05:
+
+```{code-cell} ipython3
+alpha = 0.05
+
+if p_value < alpha:
+    print("p-value", round(p_value, 4), "< α", alpha, ": REJECT H₀")
+    print("The difference in birth weights IS statistically significant.")
+else:
+    print("p-value", round(p_value, 4), ">= α", alpha, ": FAIL TO REJECT H₀")
+    print("No significant difference in birth weights.")
+```
+
+The p-value is essentially zero — the difference is highly significant.
 
 ```{note}
-By default, `ttest_ind()` performs **Welch's t-test**, which does NOT assume equal variances between groups. This is the recommended approach — it's more robust. If you specifically need the pooled (Student's) t-test, use `ttest_ind(a, b, equal_var=True)`, but Welch's is almost always the better choice.
+By default, `ttest_ind()` performs **Welch's t-test**, which does NOT assume the two groups have equal variances. This is the recommended default — it's more robust. If you specifically need the pooled (Student's) t-test, use `ttest_ind(a, b, equal_var=True)`, but Welch's is almost always the better choice.
 ```
 
 ### Interpreting the Output
 
-Let's make sure we understand what these numbers mean:
+Two numbers tell the whole story:
 
 | Output | What it tells you |
 |--------|---------|
 | **t-statistic** | How many standard errors the observed difference is from zero. Bigger = stronger evidence against H₀ |
 | **p-value** | Probability of seeing a difference this large (or larger) if H₀ were true. Smaller = stronger evidence against H₀ |
 
-A large absolute t-statistic (far from 0) and small p-value (< 0.05) both point to the same conclusion: the difference is unlikely to be due to chance alone.
+A large absolute t-statistic (far from 0) and a small p-value (< 0.05) both point to the same conclusion: the difference is unlikely to be due to chance alone.
 
-### Working with Real Data
-
-In the example above, we had two separate arrays. But in practice, your data will usually be in a DataFrame with a column indicating which group each observation belongs to. How do you split it? Using the filtering skills from Chapter 6:
-
-```{code-cell} ipython3
-# Create a DataFrame (as you'd typically load from a CSV)
-births = pd.DataFrame({
-    'weight': np.concatenate([nonsmoker_weights, smoker_weights]),
-    'habit': ['nonsmoker'] * 800 + ['smoker'] * 200
-})
-
-# Split by group — this is just filtering!
-nonsmoker = births[births['habit'] == 'nonsmoker']['weight']
-smoker = births[births['habit'] == 'smoker']['weight']
-
-# Run the test
-t_stat, p_value = ttest_ind(nonsmoker, smoker)
-print("t-statistic: ", round(t_stat, 4))
-print("p-value: ", round(p_value, 4))
-```
-
-
-Notice how we used the same boolean filtering pattern from Chapter 6 — `births[births['habit'] == 'nonsmoker']` — to split the data into two groups before passing them to `ttest_ind()`. Everything we've learned builds on what came before!
+Notice that the boolean-filter pattern we used to split `births` into two groups — `births[births['habit'] == 'nonsmoker']` — is exactly the same filtering you learned in Chapter 6. There's no special "split into groups" function for the t-test; it's just the same filtering trick applied before the test.
 
 ---
 
@@ -314,8 +367,8 @@ group_1 = stat_practical[stat_practical['group'] == 'Group A']['score'].values
 group_2 = stat_practical[stat_practical['group'] == 'Group B']['score'].values
 
 t_stat, p_value = ttest_ind(group_1, group_2)
-print("Difference in means: ", round(group_2.mean() - group_1.mean(), 2))
-print("p-value: ", round(p_value, 6))
+print("Difference in means:", round(group_2.mean() - group_1.mean(), 2))
+print("p-value:", round(p_value, 6))
 ```
 
 
@@ -366,11 +419,11 @@ How do you convert? Since `ttest_ind` always returns a two-tailed p-value, you s
 # For a one-tailed test, divide the two-tailed p-value by 2
 # (only valid if the observed difference is in the expected direction)
 
-t_stat, p_value_two_tailed = ttest_ind(smoker, nonsmoker)
+t_stat, p_value_two_tailed = ttest_ind(smoker_weights, nonsmoker_weights)
 p_value_one_tailed = p_value_two_tailed / 2
 
-print("Two-tailed p-value: ", round(p_value_two_tailed, 4))
-print("One-tailed p-value: ", round(p_value_one_tailed, 4))
+print("Two-tailed p-value:", round(p_value_two_tailed, 4))
+print("One-tailed p-value:", round(p_value_one_tailed, 4))
 ```
 
 ```{warning}
@@ -429,7 +482,7 @@ def inference_workflow(data, group_col, value_col, alpha=0.05):
     print("\n1. DESCRIPTIVE STATISTICS")
     print("   ", groups[0], ": n=", len(group1), ", mean=", round(group1.mean(), 3), ", sd=", round(group1.std(), 3))
     print("   ", groups[1], ": n=", len(group2), ", mean=", round(group2.mean(), 3), ", sd=", round(group2.std(), 3))
-    print("   Difference: ", round(group1.mean() - group2.mean(), 3))
+    print("   Difference:", round(group1.mean() - group2.mean(), 3))
 
     # Step 2: Hypotheses
     print("\n2. HYPOTHESES")
@@ -439,8 +492,8 @@ def inference_workflow(data, group_col, value_col, alpha=0.05):
     # Step 3: Test
     print("\n3. WELCH'S TWO-SAMPLE t-TEST")
     t_stat, p_value = ttest_ind(group1, group2)
-    print("   t-statistic: ", round(t_stat, 4))
-    print("   p-value: ", round(p_value, 4))
+    print("   t-statistic:", round(t_stat, 4))
+    print("   p-value:", round(p_value, 4))
 
     # Step 4: Decision
     print("\n4. DECISION (α = ", alpha, ")")
@@ -524,17 +577,17 @@ print("   H₁: p_traditional ≠ p_new (there IS a difference)")
 
 # 2. Pooled proportion
 p_pool = (x1 + x2) / (n1 + n2)
-print("\n2. Pooled proportion: ", round(p_pool, 4))
+print("\n2. Pooled proportion:", round(p_pool, 4))
 
 # 3. Standard error and z-statistic
 se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
 z_stat = (p1 - p2) / se
-print("\n3. Standard error: ", round(se, 4))
-print("   z-statistic: ", round(z_stat, 4))
+print("\n3. Standard error:", round(se, 4))
+print("   z-statistic:", round(z_stat, 4))
 
 # 4. p-value and decision
 p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-print("\n4. p-value: ", round(p_value, 4))
+print("\n4. p-value:", round(p_value, 4))
 if p_value < 0.05:
     print("   Decision: REJECT H₀ — significant difference in pass rates")
 else:
@@ -602,13 +655,13 @@ version_B = ab_test[ab_test['version'] == 'B']['time_on_page_seconds'].values
 print("1. DESCRIPTIVE STATISTICS")
 print("   Version A: n=", len(version_A), ", mean=", round(version_A.mean(), 1), "s, sd=", round(version_A.std(), 1), "s")
 print("   Version B: n=", len(version_B), ", mean=", round(version_B.mean(), 1), "s, sd=", round(version_B.std(), 1), "s")
-print("   Difference: ", round(version_B.mean() - version_A.mean(), 1), "s")
+print("   Difference:", round(version_B.mean() - version_A.mean(), 1), "s")
 
 # 2. Two-sample t-test
 t_stat, p_value = ttest_ind(version_A, version_B)
 print("\n2. TWO-SAMPLE t-TEST (Welch's)")
-print("   t-statistic: ", round(t_stat, 4))
-print("   p-value: ", round(p_value, 4))
+print("   t-statistic:", round(t_stat, 4))
+print("   p-value:", round(p_value, 4))
 
 # 3. Decision
 print("\n3. DECISION")
