@@ -29,6 +29,8 @@ Each of those is a **hypothesis test**. The framework is always the same — we'
 import numpy as np
 import pandas as pd
 from scipy import stats
+from scipy.stats import ttest_ind, ttest_1samp, ttest_rel
+from statsmodels.stats.proportion import proportions_ztest, proportion_confint
 import matplotlib.pyplot as plt
 ```
 
@@ -97,9 +99,11 @@ ax.fill_between(x, y, where=(x >= z_critical),
 ax.axvline(x=-z_critical, color='crimson', linestyle='--', alpha=0.7)
 ax.axvline(x=z_critical, color='crimson', linestyle='--', alpha=0.7)
 
-# Critical-value labels
-ax.text(-z_critical, -0.025, "−" + str(z_critical), ha='center', color='crimson', fontsize=11)
-ax.text(z_critical, -0.025, "+" + str(z_critical), ha='center', color='crimson', fontsize=11)
+# Critical-value labels (with white background so they don't clash with the dashed line)
+label_kwargs = dict(ha='center', color='crimson', fontsize=11,
+                    bbox=dict(facecolor='white', edgecolor='none', pad=2))
+ax.text(-z_critical, -0.02, "−" + str(z_critical), **label_kwargs)
+ax.text(z_critical, -0.02, "+" + str(z_critical), **label_kwargs)
 
 ax.set_xlabel('Test statistic (z)')
 ax.set_ylabel('Density (under H₀)')
@@ -115,6 +119,102 @@ Two things to notice. First, the **rejection region** is just the 5% of the area
 ```{warning}
 **"Fail to reject H₀" is NOT the same as "accept H₀"!** This is one of the most common mistakes in statistics. We never prove the null hypothesis is true — we just don't have enough evidence to reject it. It's like saying "not guilty" in court — it doesn't mean "innocent", just that the evidence wasn't strong enough.
 ```
+
+---
+
+## Hypothesis Test for One Proportion (Z-Test)
+
+The simplest hypothesis test asks: *is one group's proportion different from a known baseline?* For example: "Out of all students surveyed, is the percentage who support a policy different from 50%?" The baseline (here, 50%) is fixed — we're testing whether the **observed** proportion strays meaningfully from it.
+
+```{note}
+**Example: extending library hours.** A university surveyed 200 students about whether they support extending library hours to 24/7 during exam period (`1` = yes, `0` = no).
+
+- **Research question**: Is the proportion of students who support the extension *different from 50%*?
+- **H₀**: p = 0.50 (students are evenly split)
+- **H₁**: p ≠ 0.50 (the proportion differs from 50%)
+- **Significance level**: α = 0.05
+```
+
+### The formula
+
+For a one-proportion test, the formula is simpler than the two-proportion case — we're just comparing one observed proportion to a hypothesised value:
+
+$$z = \frac{\hat{p} - p_0}{\sqrt{\dfrac{p_0\,(1 - p_0)}{n}}}$$
+
+The numerator is *how far* the sample proportion lands from the hypothesised value. The denominator is the standard error **assuming H₀ is true** — that's why `p_0` (not `p̂`) appears under the square root.
+
+### Example walkthrough
+
+**Step 1 — Load the data and compute the sample proportion:**
+
+```{code-cell} ipython3
+df = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/library_survey.csv")
+
+n = len(df)
+x = df["support"].sum()        # number of "yes" responses
+p_hat = x / n
+
+print("Sample size n =", n)
+print("Number who support x =", x)
+print("Sample proportion p_hat =", round(p_hat, 4))
+```
+
+So 110 of 200 students (55%) said yes. Is that **meaningfully** different from 50%, or could the gap just be sampling noise?
+
+**Step 2 — Check the conditions.** The z-test relies on the sampling distribution of `p̂` being approximately normal. The standard rule of thumb is the **success–failure condition**: under H₀ we need at least 10 expected "yes" responses *and* at least 10 expected "no" responses:
+
+```{code-cell} ipython3
+p_0 = 0.50
+
+print("n * p_0       =", int(n * p_0),       "(need >= 10)")
+print("n * (1 - p_0) =", int(n * (1 - p_0)), "(need >= 10)")
+print("Both conditions satisfied?", n * p_0 >= 10 and n * (1 - p_0) >= 10)
+```
+
+Both checks pass comfortably (100 expected yes, 100 expected no), so the normal approximation is fine here.
+
+**Step 3 — Run the z-test.** Rather than calculating `z` and `p` by hand, we use `proportions_ztest` from `statsmodels`:
+
+```{code-cell} ipython3
+z_stat, p_value = proportions_ztest(count=x, nobs=n, value=p_0, alternative="two-sided")
+
+print("z-statistic =", round(z_stat, 4))
+print("p-value     =", round(p_value, 4))
+```
+
+A z-statistic of about **1.42** is well inside the ±1.96 fail-to-reject region we plotted earlier — that already tells us the data isn't compelling enough to reject H₀.
+
+**Step 4 — Confidence interval.** The companion function `proportion_confint` gives the 95% CI for the same data in one line:
+
+```{code-cell} ipython3
+ci_lower, ci_upper = proportion_confint(count=x, nobs=n, alpha=0.05, method="normal")
+
+print("95% CI for p: (", round(ci_lower, 4), ",", round(ci_upper, 4), ")")
+print("Does the CI contain 0.50?", ci_lower <= p_0 <= ci_upper)
+```
+
+The CI **(0.481, 0.619)** contains 0.50, which agrees with the test: 50% is a plausible value for the true population proportion.
+
+**Step 5 — Decision and conclusion.**
+
+```{code-cell} ipython3
+alpha = 0.05
+
+if p_value < alpha:
+    print("p-value", round(p_value, 4), "< α", alpha, ": REJECT H₀")
+else:
+    print("p-value", round(p_value, 4), ">= α", alpha, ": FAIL TO REJECT H₀")
+```
+
+So we **fail to reject H₀**. Putting it into the kind of sentence you'd use in a write-up:
+
+> *There is not sufficient evidence at the 5% significance level to conclude that the proportion of students who support extended library hours differs from 50% (z = 1.42, p = 0.155, 95% CI [0.481, 0.619]).*
+
+Notice three things:
+
+- The **test** and the **CI** agree. They have to: a 95% CI containing the null value is mathematically equivalent to a two-tailed test failing to reject at α = 0.05.
+- A "fail to reject" verdict is **not** the same as "we proved students are evenly split". 55% really might be the true rate; we just don't have enough evidence to claim it differs from 50%.
+- A larger sample would shrink the standard error and could turn this borderline result either way — so reporting the CI alongside the p-value is more honest than the p-value alone.
 
 ---
 
@@ -176,94 +276,38 @@ print("Difference:", round(p2 - p1, 4))
 ```
 
 
-So smokers have a 21.0% premature rate compared to 13.8% for nonsmokers — a 7.25 percentage-point difference. But is this difference *statistically significant*, or could it just be sampling noise? Let's work through the test step by step.
+So smokers have a 21.0% premature rate compared to 13.8% for nonsmokers — a 7.25 percentage-point difference. But is this difference *statistically significant*, or could it just be sampling noise?
 
-**Step 1 — Pooled proportion.** Under H₀ both groups share the same true proportion, so our best estimate of that common proportion combines all the data:
-
-```{code-cell} ipython3
-p_pool = (x1 + x2) / (n1 + n2)
-print("Pooled proportion:", round(p_pool, 4))
-```
-
-**Step 2 — Standard error.** This measures how much the *difference* between the two sample proportions would jiggle from sample to sample, if H₀ were true:
+**Step 1 — Run the test.** The same `proportions_ztest` function we just used handles two-proportion comparisons too — we just hand it a pair of counts and a pair of sample sizes:
 
 ```{code-cell} ipython3
-se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
-print("Standard error:", round(se, 4))
+z_stat, p_value = proportions_ztest(count=[x1, x2], nobs=[n1, n2], alternative="two-sided")
+
+print("z-statistic =", round(z_stat, 4))
+print("p-value     =", round(p_value, 4))
 ```
 
-**Step 3 — Z-statistic.** Now we ask: *how many standard errors is the observed difference (p₁ − p₂) away from zero?*
+Behind the scenes, `statsmodels` computes exactly the pooled-proportion formula we wrote out above. (You can verify it matches: pooled `p̂ ≈ 0.152`, SE ≈ 0.029, so `z = (0.1375 − 0.21) / 0.029 ≈ −2.55`.)
 
-```{code-cell} ipython3
-z_stat = (p1 - p2) / se
-print("z-statistic:", round(z_stat, 4))
-```
+A z-statistic of about **−2.55** is well outside the ±1.96 cutoff we plotted earlier — already a strong hint that we'll reject H₀.
 
-A z-statistic of −2.51 means the observed difference is about 2.5 SEs below zero — well outside the ±1.96 cutoff we just plotted. That already hints at a rejection.
-
-**Step 4 — p-value.** The p-value is the probability of seeing a difference at least this extreme in *either direction* if H₀ were true. Since we're doing a two-tailed test, we double the upper-tail area:
-
-```{code-cell} ipython3
-p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-print("p-value:", round(p_value, 4))
-```
-
-**Step 5 — Decision.** Compare the p-value to α = 0.05:
+**Step 2 — Decide.** Compare the p-value to α = 0.05:
 
 ```{code-cell} ipython3
 alpha = 0.05
 
 if p_value < alpha:
     print("p-value", round(p_value, 4), "< α", alpha, ": REJECT H₀")
-    print("There IS a significant difference in premature birth rates.")
 else:
     print("p-value", round(p_value, 4), ">= α", alpha, ": FAIL TO REJECT H₀")
-    print("No significant difference in premature birth rates.")
 ```
 
-Let's make sure we understand what just happened:
+So we **reject H₀**. In a write-up that would read:
 
-1. The **pooled proportion** (≈ 0.152) is the overall premature rate assuming no group difference.
-2. The **standard error** (≈ 0.029) is how much the difference would vary by chance.
-3. The **z-statistic** (−2.51) says the observed difference is 2.51 standard errors below zero.
-4. The **p-value** (0.012) says: if there really were no difference, we'd see a gap this large only 1.2% of the time.
+> *There is sufficient evidence at the 5% significance level to conclude that the premature birth rate differs between smokers and nonsmokers (z = −2.55, p = 0.011). Smokers in this sample had a higher premature rate (21.0% vs 13.8% for nonsmokers).*
 
-Since 1.2% is well below 5%, we conclude that smokers have a significantly higher rate of premature births (p = 0.012).
-
-### Putting It in a Reusable Function
-
-You'll likely run this test more than once, so let's wrap it in a function:
-
-```{code-cell} ipython3
-def z_test_two_proportions(x1, n1, x2, n2, alpha=0.05):
-    """
-    Two-proportion z-test using the pooled proportion.
-
-    Parameters:
-        x1, n1: successes and total for group 1
-        x2, n2: successes and total for group 2
-        alpha: significance level (default 0.05)
-    """
-    p1 = x1 / n1
-    p2 = x2 / n2
-    p_pool = (x1 + x2) / (n1 + n2)
-
-    se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
-    z_stat = (p1 - p2) / se
-    p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-
-    print("Group 1:", x1, "/", n1, " = ", round(p1, 4))
-    print("Group 2:", x2, "/", n2, " = ", round(p2, 4))
-    print("Pooled proportion:", round(p_pool, 4))
-    print("z-statistic:", round(z_stat, 4))
-    print("p-value:", round(p_value, 4))
-
-    if p_value < alpha:
-        print("\nReject H₀ at α = ", alpha, ": significant difference")
-    else:
-        print("\nFail to reject H₀ at α = ", alpha, ": no significant difference")
-
-    return z_stat, p_value
+```{tip}
+**Same function, different argument shape.** `proportions_ztest` recognises a one-proportion test when you pass scalar `count` and `nobs` plus a `value=p_0`, and a two-proportion test when you pass a list of two counts and a list of two sample sizes (no `value` needed — the null is "p₁ = p₂"). The interface is intentionally consistent so you don't need to remember a separate function for each case.
 ```
 
 ---
