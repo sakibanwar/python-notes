@@ -630,8 +630,33 @@ print("Difference in means:", round(group_2.mean() - group_1.mean(), 2))
 print("p-value:", round(p_value, 6))
 ```
 
+The result is "significant" (p < 0.05), but the actual difference is only about half a point on a scale where the standard deviation is 15. The picture makes that distinction stark — the two distributions are **almost completely on top of each other**, even though the test confidently rejects H₀:
 
-The result is "significant" (p < 0.05), but the actual difference is only 0.59 points on a scale where the standard deviation is 15. Would you change a business decision based on a difference this tiny? Probably not.
+```{code-cell} ipython3
+:tags: [hide-input]
+
+mean1, std1 = group_1.mean(), group_1.std(ddof=1)
+mean2, std2 = group_2.mean(), group_2.std(ddof=1)
+
+x = np.linspace(min(mean1, mean2) - 4*max(std1, std2),
+                max(mean1, mean2) + 4*max(std1, std2), 500)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(x, stats.norm.pdf(x, mean1, std1), color='steelblue', linewidth=2,
+        label='Group A (mean = ' + str(round(mean1, 1)) + ')')
+ax.plot(x, stats.norm.pdf(x, mean2, std2), color='crimson', linewidth=2,
+        label='Group B (mean = ' + str(round(mean2, 1)) + ')')
+ax.fill_between(x, stats.norm.pdf(x, mean1, std1), alpha=0.2, color='steelblue')
+ax.fill_between(x, stats.norm.pdf(x, mean2, std2), alpha=0.2, color='crimson')
+ax.set_xlabel('Score')
+ax.set_ylabel('Density')
+ax.set_title('Two distributions — statistically different, practically identical')
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+Would you change a business decision based on a difference this tiny? Probably not.
 
 This is why you should always ask two questions, not just one:
 
@@ -672,6 +697,45 @@ By default, all the tests we've been running are **two-tailed** — they check f
 - **H₀**: μ₁ ≥ μ₂
 - **H₁**: μ₁ < μ₂ (specifically testing if one group is **lower**)
 
+The two cases differ in **where the rejection region sits**. Side by side:
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
+x = np.linspace(-4, 4, 400)
+y = stats.norm.pdf(x)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 4.5), sharey=True)
+
+# Two-tailed
+ax = axes[0]
+ax.plot(x, y, color='steelblue', linewidth=2)
+ax.fill_between(x, y, where=(x <= -1.96), alpha=0.6, color='crimson', label='Reject (2.5%)')
+ax.fill_between(x, y, where=(x >=  1.96), alpha=0.6, color='crimson')
+ax.fill_between(x, y, where=(x >= -1.96) & (x <= 1.96), alpha=0.2, color='steelblue', label='Fail to reject (95%)')
+ax.axvline(-1.96, color='crimson', linestyle='--', alpha=0.7)
+ax.axvline( 1.96, color='crimson', linestyle='--', alpha=0.7)
+ax.set_title('Two-tailed: 5% split between two tails\nCutoffs at ±1.96')
+ax.set_xlabel('Test statistic')
+ax.set_ylabel('Density')
+ax.legend(loc='upper right', fontsize=9)
+
+# One-tailed (upper)
+ax = axes[1]
+ax.plot(x, y, color='steelblue', linewidth=2)
+ax.fill_between(x, y, where=(x >= 1.645), alpha=0.6, color='crimson', label='Reject (5%)')
+ax.fill_between(x, y, where=(x <  1.645), alpha=0.2, color='steelblue', label='Fail to reject (95%)')
+ax.axvline(1.645, color='crimson', linestyle='--', alpha=0.7)
+ax.set_title('One-tailed (upper): 5% all in one tail\nCutoff at +1.645')
+ax.set_xlabel('Test statistic')
+ax.legend(loc='upper right', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+```
+
+Notice the **lower cutoff** for the one-tailed case: 1.645 vs 1.96. That's why one-tailed tests are more "powerful" — a smaller test statistic suffices to reject. But the cost is that you can't reject in the *other* direction at all. The test is blind to evidence pointing the wrong way.
+
 How do you convert? Since `ttest_ind` always returns a two-tailed p-value, you simply divide by 2:
 
 ```{code-cell} ipython3
@@ -701,6 +765,37 @@ The p-value is the probability of observing data as extreme as (or more extreme 
 
 A p-value of 0.03 means: "If there really were no effect, we'd see results this extreme only 3% of the time." That's pretty unlikely — so we take it as evidence against the null.
 
+Geometrically, the p-value is **literally the area under the curve** beyond the observed test statistic. For a two-sided test, it's the area in *both* tails:
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
+x = np.linspace(-4, 4, 400)
+y = stats.norm.pdf(x)
+t_obs = 2.0   # an example observed test statistic
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(x, y, color='steelblue', linewidth=2)
+ax.fill_between(x, y, where=(x >=  t_obs), alpha=0.6, color='crimson',
+                label='p-value = total shaded area\n(both tails for a two-sided test)')
+ax.fill_between(x, y, where=(x <= -t_obs), alpha=0.6, color='crimson')
+ax.axvline( t_obs, color='crimson', linestyle='--', alpha=0.7)
+ax.axvline(-t_obs, color='crimson', linestyle='--', alpha=0.7)
+ax.text( t_obs, -0.025, "+t_obs", ha='center', color='crimson', fontsize=11,
+        bbox=dict(facecolor='white', edgecolor='none', pad=2))
+ax.text(-t_obs, -0.025, "−t_obs", ha='center', color='crimson', fontsize=11,
+        bbox=dict(facecolor='white', edgecolor='none', pad=2))
+ax.set_xlabel('Test statistic (under H₀)')
+ax.set_ylabel('Density')
+ax.set_title('What the p-value IS: the tail area beyond the observed test statistic')
+ax.legend(loc='upper right')
+ax.set_ylim(-0.04, 0.45)
+plt.tight_layout()
+plt.show()
+```
+
+So when `proportions_ztest` or `ttest_ind` returns `p_value = 0.03`, it's saying "the red shaded area sums to 0.03". The smaller that area, the further `t_obs` is out into the tail, and the more incompatible our data is with H₀.
+
 ### What the p-Value is NOT
 
 This table is worth memorising — these mistakes appear in published research papers, news articles, and even some textbooks:
@@ -716,7 +811,7 @@ This table is worth memorising — these mistakes appear in published research p
 
 ## Complete Inference Workflow
 
-Let's tie everything together. Here's a reusable function that runs the complete inference workflow — from descriptive statistics through to the test decision. You can use this as a template for your own analyses:
+Let's tie everything together. Below is a reusable function that runs the **complete inference workflow** for a **two-sample comparison** — from descriptive statistics through to the test decision. You can use this as a starting template for your own analyses (and adapt the same pattern for the other test types we've seen — one-sample, paired, or a proportion test).
 
 ```{code-cell} ipython3
 def inference_workflow(data, group_col, value_col, alpha=0.05):
@@ -781,10 +876,20 @@ Here's a quick reference for the hypothesis testing tools we built in this chapt
 
 ### Hypothesis Tests
 
-| Test | When to Use | Python |
+| Test | When to use | Python |
 |------|------------|--------|
-| Z-test for two proportions | Comparing proportions between groups | Manual (pooled proportion) |
-| Two-sample t-test | Comparing means between two independent groups | `ttest_ind(group1, group2)` |
+| **One-proportion z-test** | A single group's proportion vs a hypothesised value `p₀` | `proportions_ztest(count=x, nobs=n, value=p_0)` |
+| **Two-proportion z-test** | Comparing proportions between two independent groups | `proportions_ztest(count=[x1, x2], nobs=[n1, n2])` |
+| **One-sample t-test** | A single group's mean vs a hypothesised value `μ₀` | `stats.ttest_1samp(data, popmean=mu_0)` |
+| **Two-sample t-test** | Comparing means between two independent groups | `stats.ttest_ind(group1, group2)` |
+| **Paired t-test** | Comparing means within paired observations (same subject, before/after) | `stats.ttest_rel(before, after)` |
+
+### Companion CI functions
+
+| Test | CI helper |
+|------|-----------|
+| One-proportion | `proportion_confint(count, nobs, alpha=0.05, method="normal")` |
+| One/two-sample / paired (mean) | `stats.t.interval(0.95, df=n-1, loc=mean, scale=SE)` |
 
 ### Key Takeaways
 
