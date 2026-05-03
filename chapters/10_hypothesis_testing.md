@@ -809,63 +809,23 @@ This table is worth memorising — these mistakes appear in published research p
 
 ---
 
-## Complete Inference Workflow
+## The Universal Workflow
 
-Let's tie everything together. Below is a reusable function that runs the **complete inference workflow** for a **two-sample comparison** — from descriptive statistics through to the test decision. You can use this as a starting template for your own analyses (and adapt the same pattern for the other test types we've seen — one-sample, paired, or a proportion test).
+Look back at the five tests in this chapter — one-proportion, two-proportion, one-sample t, two-sample t, paired t. Different formulas, different functions, different scenarios. But the **shape of every example was the same**:
 
-```{code-cell} ipython3
-def inference_workflow(data, group_col, value_col, alpha=0.05):
-    """
-    Complete inference workflow for comparing two groups.
+| Step | What you do | Where it shows up |
+|------|-------------|-------------------|
+| **1. State the question** | Identify what you're comparing and write H₀ and H₁. Pick α. | The `{note}` admonition at the top of every example |
+| **2. Load and explore** | Read the CSV, look at `.head()`, glance at means/SDs/counts. | First couple of code cells |
+| **3. Check conditions** | For proportion tests, the success–failure rule. For t-tests, n ≥ 30 or roughly normal data. | A small `{note}` or one-line check |
+| **4. Run the test** | One library call: `proportions_ztest`, `ttest_1samp`, `ttest_ind`, or `ttest_rel`. | A single short cell |
+| **5. Build the CI alongside** | `proportion_confint` for proportions, `stats.t.interval` for means. Check whether it contains the null value. | A single short cell |
+| **6. Decide and write up** | Compare p-value to α. Translate the result into a one-sentence academic conclusion. | The decision cell + the academic write-up sentence |
 
-    Parameters:
-        data: DataFrame
-        group_col: name of the grouping column
-        value_col: name of the value column
-        alpha: significance level
-    """
-    groups = data[group_col].unique()
-    group1 = data[data[group_col] == groups[0]][value_col]
-    group2 = data[data[group_col] == groups[1]][value_col]
+That's it. **Every test you'll ever run follows these six steps**, with only the data and the function name changing. When you see a new test in a future module — chi-square, ANOVA, regression coefficients — try fitting it into this template before doing anything else. It almost always works.
 
-    print("=" * 55)
-    print("STATISTICAL INFERENCE WORKFLOW")
-    print("=" * 55)
-
-    # Step 1: Descriptive statistics
-    print("\n1. DESCRIPTIVE STATISTICS")
-    print("   ", groups[0], ": n=", len(group1), ", mean=", round(group1.mean(), 3), ", sd=", round(group1.std(), 3))
-    print("   ", groups[1], ": n=", len(group2), ", mean=", round(group2.mean(), 3), ", sd=", round(group2.std(), 3))
-    print("   Difference:", round(group1.mean() - group2.mean(), 3))
-
-    # Step 2: Hypotheses
-    print("\n2. HYPOTHESES")
-    print("   H₀: μ_", groups[0], " = μ_", groups[1])
-    print("   H₁: μ_", groups[0], " ≠ μ_", groups[1])
-
-    # Step 3: Test
-    print("\n3. WELCH'S TWO-SAMPLE t-TEST")
-    t_stat, p_value = ttest_ind(group1, group2)
-    print("   t-statistic:", round(t_stat, 4))
-    print("   p-value:", round(p_value, 4))
-
-    # Step 4: Decision
-    print("\n4. DECISION (α = ", alpha, ")")
-    if p_value < alpha:
-        print("   p-value (", round(p_value, 4), ") < α (", alpha, "): REJECT H₀")
-        print("   There IS a statistically significant difference.")
-    else:
-        print("   p-value (", round(p_value, 4), ") ≥ α (", alpha, "): FAIL TO REJECT H₀")
-        print("   No statistically significant difference.")
-
-    print("=" * 55)
-    return t_stat, p_value
-
-# Example usage — load the births data
-births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
-births = births.rename(columns={'weight_lbs': 'weight'})  # Match expected column name
-
-inference_workflow(births, 'habit', 'weight')
+```{tip}
+**Reporting checklist.** A good write-up of a hypothesis test always includes three things: the **test statistic**, the **p-value**, and a **confidence interval**. A p-value alone is incomplete — it tells you whether the result is significant, but the CI tells you *how big* the effect is and *how precisely* you've estimated it.
 ```
 
 ---
