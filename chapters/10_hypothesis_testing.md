@@ -312,9 +312,112 @@ So we **reject H₀**. In a write-up that would read:
 
 ---
 
+## Hypothesis Test for One Mean (t-Test)
+
+We've been testing **proportions** (yes/no outcomes). What if our outcome is a **measurement** — a birth weight, an exam score, the number of cars on a road? Then we need a **t-test** instead of a z-test.
+
+The simplest case: we have one group's measurements, and we want to test whether the population mean equals some hypothesised value `μ₀`.
+
+```{note}
+**Example: Friday the 13th.** A folk superstition says Friday the 13th is "unlucky" — quieter roads, fewer shoppers, more accidents. The dataset `friday.csv` records pairs of activity (traffic, shopping, hospital accidents) on Friday the 6th and Friday the 13th of the same month, across multiple months. The column `diff` is defined as:
+
+> `diff` = (activity on the 6th) − (activity on the 13th)
+
+A *positive* `diff` means **more** activity on the 6th (people stayed home on the 13th). A *negative* `diff` means the opposite.
+
+- **Research question**: Is there a systematic difference in activity between the 6th and the 13th?
+- **H₀**: μ\_diff = 0 (no average difference)
+- **H₁**: μ\_diff ≠ 0 (there is a difference)
+- **Significance level**: α = 0.05
+```
+
+### The formula
+
+For a one-sample t-test, the test statistic is:
+
+$$t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
+
+Reading top to bottom:
+
+- the **numerator** is how far the sample mean lies from the hypothesised value `μ₀`,
+- the **denominator** is the standard error — the SE of the sample mean we built up in Chapter 9.
+
+We use the **t-distribution** (not the normal) because we're estimating `σ` from the sample. Degrees of freedom are `n − 1`. As `n` grows, `t*` converges toward `z*` (recall the z-vs-t note from Chapter 9).
+
+### Example walkthrough
+
+**Step 1 — Load the data and look at the structure.**
+
+```{code-cell} ipython3
+df = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/friday.csv")
+df.head()
+```
+
+Each row is one paired measurement: a `type` of activity (traffic, shopping, accident), a `date`, the values on the 6th and the 13th, and the `diff`. We'll work directly with the `diff` column.
+
+**Step 2 — Eyeball the summary statistics.**
+
+```{code-cell} ipython3
+diff = df["diff"]
+
+print("n =", len(diff))
+print("mean of diff:", round(diff.mean(), 2))
+print("std of diff (ddof=1):", round(diff.std(ddof=1), 2))
+```
+
+The sample mean is positive (about **+266**), suggesting more activity on the 6th on average. But the standard deviation is enormous (≈849) — could that mean just be noise?
+
+**Step 3 — Run the t-test.** `scipy.stats.ttest_1samp` does the whole calculation in one line. We pass the data and the hypothesised population mean (`popmean=0`):
+
+```{code-cell} ipython3
+t_stat, p_value = stats.ttest_1samp(diff, popmean=0)
+
+print("t-statistic =", round(t_stat, 4))
+print("p-value     =", round(p_value, 4))
+print("df          =", len(diff) - 1)
+```
+
+A t-statistic of about **2.45** says the sample mean is roughly 2.5 standard errors above zero. The p-value of **0.017** says: if there really were no average difference, we'd see a sample mean this far from zero (in either direction) only about 1.7% of the time.
+
+**Step 4 — Confidence interval.** The companion function `stats.t.interval` gives us the 95% CI for the mean directly, without us having to compute `t*` and the bounds by hand:
+
+```{code-cell} ipython3
+n = len(diff)
+se = diff.std(ddof=1) / np.sqrt(n)
+ci = stats.t.interval(0.95, df=n-1, loc=diff.mean(), scale=se)
+
+print("95% CI for mean diff: (", round(ci[0], 2), ",", round(ci[1], 2), ")")
+print("Does the CI contain 0?", ci[0] <= 0 <= ci[1])
+```
+
+The 95% CI is roughly **(48.8, 483.8)**, which does **not** contain 0 — that agrees with the test rejecting H₀.
+
+**Step 5 — Decision and conclusion.**
+
+```{code-cell} ipython3
+alpha = 0.05
+
+if p_value < alpha:
+    print("p-value", round(p_value, 4), "< α", alpha, ": REJECT H₀")
+else:
+    print("p-value", round(p_value, 4), ">= α", alpha, ": FAIL TO REJECT H₀")
+```
+
+So we **reject H₀**. Writing it up properly:
+
+> *There is sufficient evidence at the 5% significance level to conclude that activity levels differ between Friday the 6th and Friday the 13th (t(60) = 2.45, p = 0.017, 95% CI for the mean difference [48.8, 483.8]). On average, activity was higher on the 6th than on the 13th.*
+
+Notice the parallels with everything we've done so far:
+
+- The **test** and the **CI** agree — the CI excludes 0 if and only if the two-tailed test rejects at α = 0.05.
+- The conclusion isn't "Friday the 13th is unlucky". It's just that, in *this* sample, average activity was lower on the 13th. Whether that's meaningful is a separate question.
+- The same `Estimate ± Critical × SE` template from Chapter 9 sits underneath everything.
+
+---
+
 ## Hypothesis Test for Two Means (t-Test)
 
-The z-test compared **proportions**. But what if you want to compare **means** — like the average birth weight of smokers vs nonsmokers? That's where the **two-sample t-test** comes in.
+The one-sample t-test asked whether **one group's mean** differed from a hypothesised value. The natural next step is to compare the means of **two** groups — for example, the average birth weight of smokers' babies vs nonsmokers' babies. That's the **two-sample t-test**.
 
 ### Setting Up
 
