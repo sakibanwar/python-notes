@@ -499,6 +499,118 @@ Notice that the boolean-filter pattern we used to split `births` into two groups
 
 ---
 
+## Hypothesis Test for Paired Means (Paired t-Test)
+
+So far our t-tests have used **independent** samples — different people in each group. But sometimes the two measurements come from the **same** subject: a before/after measurement, two test scores per student, the same patient on two drugs. These observations are *paired*, and treating them as independent throws away useful information.
+
+The fix is the **paired t-test**. And it has a beautiful property: it's actually just a **one-sample t-test on the differences** — the same thing we did with the Friday-the-13th data, but now applied to within-subject differences.
+
+```{note}
+**Example: reading vs writing exams.** 200 students each sat a reading test and a writing test. We want to know whether students score systematically differently on the two exams.
+
+- **Research question**: Do students' mean reading and writing scores differ?
+- **H₀**: μ\_diff = 0 (no average difference between reading and writing)
+- **H₁**: μ\_diff ≠ 0 (there *is* a difference)
+
+where `diff = reading − writing` for each student. Significance level: α = 0.05.
+```
+
+### Why "paired" matters
+
+Each student's reading and writing scores aren't independent — students who score high on one test tend to score high on the other (overall ability, effort, fatigue, exam-taking skill). If we treated reading and writing as two independent samples and ran a two-sample t-test, that within-student correlation would inflate the standard error and make us **less** likely to detect a real difference.
+
+The paired test fixes this by **subtracting within each student first**, then testing whether the average difference is zero. The within-student variability cancels out, giving us a more powerful test.
+
+### The formula
+
+For each student, compute the difference `dᵢ = readingᵢ − writingᵢ`. Then test whether `μ_d = 0`:
+
+$$t = \frac{\bar{d}}{s_d \,/\, \sqrt{n}}$$
+
+This is **identical** to the one-sample t-test formula from the previous section, just applied to the column of differences.
+
+### Example walkthrough
+
+**Step 1 — Load the data and look at the structure.**
+
+```{code-cell} ipython3
+df = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/reading_writing.csv")
+df.head()
+```
+
+Each row is one student with their two scores. The pairing is implicit: row 1 is the same student's reading and writing scores.
+
+**Step 2 — Compute the differences and inspect them.**
+
+```{code-cell} ipython3
+diff = df["reading"] - df["writing"]
+
+print("n =", len(diff))
+print("mean of diff:", round(diff.mean(), 2))
+print("std of diff (ddof=1):", round(diff.std(ddof=1), 2))
+```
+
+The mean difference is about **+2.6**, suggesting students score slightly higher on reading on average. With 200 students and a standard deviation of about 8, is this noise or signal?
+
+**Step 3 — Run the paired t-test.** `scipy.stats.ttest_rel` ("rel" for "related" / paired) takes the two columns directly and does the subtraction internally:
+
+```{code-cell} ipython3
+t_stat, p_value = stats.ttest_rel(df["reading"], df["writing"])
+
+print("t-statistic =", round(t_stat, 4))
+print("p-value     =", round(p_value, 6))
+print("df          =", len(df) - 1)
+```
+
+A t-statistic of about **4.6** sits far outside the ±1.96 cutoff. The p-value is essentially **0** — if there really were no average difference, we'd be vanishingly unlikely to see this much.
+
+**Step 4 — The key insight.** A paired t-test is *literally* a one-sample t-test on the differences. Watch:
+
+```{code-cell} ipython3
+# Same calculation, two different ways of expressing it
+t_paired,    p_paired     = stats.ttest_rel(df["reading"], df["writing"])
+t_onesample, p_onesample  = stats.ttest_1samp(diff, popmean=0)
+
+print("ttest_rel:    t =", round(t_paired, 4),    " p =", round(p_paired, 6))
+print("ttest_1samp:  t =", round(t_onesample, 4), " p =", round(p_onesample, 6))
+```
+
+**Identical numbers.** They're the same test. `ttest_rel` is just a convenience that subtracts the columns for you and saves a line of code.
+
+**Step 5 — Confidence interval.** Same `stats.t.interval` we used for the one-sample case, applied to the differences:
+
+```{code-cell} ipython3
+n = len(diff)
+se = diff.std(ddof=1) / np.sqrt(n)
+ci = stats.t.interval(0.95, df=n-1, loc=diff.mean(), scale=se)
+
+print("95% CI for mean diff: (", round(ci[0], 2), ",", round(ci[1], 2), ")")
+print("Does the CI contain 0?", ci[0] <= 0 <= ci[1])
+```
+
+The CI is roughly **(1.5, 3.75)** — clearly above zero — which agrees with the test rejecting H₀.
+
+**Step 6 — Decision and conclusion.**
+
+```{code-cell} ipython3
+alpha = 0.05
+
+if p_value < alpha:
+    print("p-value", round(p_value, 6), "< α", alpha, ": REJECT H₀")
+else:
+    print("p-value", round(p_value, 6), ">= α", alpha, ": FAIL TO REJECT H₀")
+```
+
+So we **reject H₀**. The write-up:
+
+> *There is sufficient evidence at the 5% significance level to conclude that students score differently on reading and writing exams (paired t(199) = 4.60, p < 0.001, 95% CI for the mean difference [1.5, 3.75]). On average, reading scores are about 2.6 points higher than writing scores.*
+
+```{tip}
+**When should I use paired vs two-sample?** If each observation in group 1 has a **natural partner** in group 2 — same student, same patient, before/after — use **paired** (`ttest_rel`). If the two groups are **independent** people/units, use **two-sample** (`ttest_ind`). Mixing them up is one of the most common mistakes in applied statistics: treating paired data as independent inflates the standard error and reduces your power to detect real effects.
+```
+
+---
+
 ## Statistical Significance vs Practical Significance
 
 We've been focused on p-values and statistical significance. But here's something crucial that many people miss: **a result can be statistically significant without being practically important**.
