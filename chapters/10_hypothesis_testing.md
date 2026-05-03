@@ -173,7 +173,14 @@ print("Both conditions satisfied?", n * p_0 >= 10 and n * (1 - p_0) >= 10)
 
 Both checks pass comfortably (100 expected yes, 100 expected no), so the normal approximation is fine here.
 
-**Step 3 — Run the z-test.** Rather than calculating `z` and `p` by hand, we use `proportions_ztest` from `statsmodels`:
+**Step 3 — Run the z-test.** Rather than calculating `z` and `p` by hand, we use `proportions_ztest` from `statsmodels`. The function takes four arguments:
+
+- **`count`** — the number of successes in the sample (here `x`, the count of "yes" responses).
+- **`nobs`** — the total number of observations (here `n`).
+- **`value`** — the hypothesised proportion under H₀ (here `0.50`).
+- **`alternative`** — `"two-sided"`, `"larger"`, or `"smaller"` — must match your H₁.
+
+It returns the **test statistic** and the **p-value** as a tuple:
 
 ```{code-cell} ipython3
 z_stat, p_value = proportions_ztest(count=x, nobs=n, value=p_0, alternative="two-sided")
@@ -184,7 +191,13 @@ print("p-value     =", round(p_value, 4))
 
 A z-statistic of about **1.42** is well inside the ±1.96 fail-to-reject region we plotted earlier — that already tells us the data isn't compelling enough to reject H₀.
 
-**Step 4 — Confidence interval.** The companion function `proportion_confint` gives the 95% CI for the same data in one line:
+**Step 4 — Confidence interval.** The companion function `proportion_confint` gives the 95% CI in one line. Its arguments:
+
+- **`count`**, **`nobs`** — same as before.
+- **`alpha`** — `1 − confidence level`, so `0.05` for a 95% CI, `0.01` for a 99% CI.
+- **`method`** — how to compute the interval. `"normal"` is the standard Wald formula `p̂ ± z* × SE` we used in Chapter 9.
+
+It returns a `(lower, upper)` tuple:
 
 ```{code-cell} ipython3
 ci_lower, ci_upper = proportion_confint(count=x, nobs=n, alpha=0.05, method="normal")
@@ -367,7 +380,13 @@ print("std of diff (ddof=1):", round(diff.std(ddof=1), 2))
 
 The sample mean is positive (about **+266**), suggesting more activity on the 6th on average. But the standard deviation is enormous (≈849) — could that mean just be noise?
 
-**Step 3 — Run the t-test.** `scipy.stats.ttest_1samp` does the whole calculation in one line. We pass the data and the hypothesised population mean (`popmean=0`):
+**Step 3 — Run the t-test.** `scipy.stats.ttest_1samp` does the whole calculation in one line. Its arguments:
+
+- **first argument** — the sample data (any 1-D array-like; here our `diff` Series).
+- **`popmean`** — the hypothesised population mean μ₀ (here `0`).
+- **`alternative`** (optional) — `"two-sided"`, `"less"`, or `"greater"`. Defaults to `"two-sided"`.
+
+It returns the **t-statistic** and a **p-value**:
 
 ```{code-cell} ipython3
 t_stat, p_value = stats.ttest_1samp(diff, popmean=0)
@@ -379,7 +398,14 @@ print("df          =", len(diff) - 1)
 
 A t-statistic of about **2.45** says the sample mean is roughly 2.5 standard errors above zero. The p-value of **0.017** says: if there really were no average difference, we'd see a sample mean this far from zero (in either direction) only about 1.7% of the time.
 
-**Step 4 — Confidence interval.** The companion function `stats.t.interval` gives us the 95% CI for the mean directly, without us having to compute `t*` and the bounds by hand:
+**Step 4 — Confidence interval.** The companion function `stats.t.interval` gives us the 95% CI for the mean directly. Its arguments:
+
+- **first argument** — the confidence level (`0.95` for a 95% CI).
+- **`df`** — degrees of freedom (`n − 1`).
+- **`loc`** — the centre of the interval (the sample mean).
+- **`scale`** — the standard error (`s / √n`).
+
+It returns the `(lower, upper)` bounds:
 
 ```{code-cell} ipython3
 n = len(diff)
@@ -456,7 +482,11 @@ print("Difference:           ", round(nonsmoker_weights.mean() - smoker_weights.
 
 There's about a half-pound difference. The question is whether it's statistically significant.
 
-**Step 3 — Run the t-test.** A single function call gives us the t-statistic and the p-value:
+**Step 3 — Run the t-test.** A single function call gives us the t-statistic and the p-value. `stats.ttest_ind` takes:
+
+- **two array arguments** — the two samples to compare (order doesn't change the conclusion, only the sign of `t`).
+- **`equal_var`** (optional) — whether to assume the two groups have equal variances. Defaults to `False`, giving **Welch's t-test** — the recommended default. (See the note below.)
+- **`alternative`** (optional) — `"two-sided"`, `"less"`, or `"greater"`. Defaults to `"two-sided"`.
 
 ```{code-cell} ipython3
 t_stat, p_value = ttest_ind(nonsmoker_weights, smoker_weights)
@@ -552,7 +582,11 @@ print("std of diff (ddof=1):", round(diff.std(ddof=1), 2))
 
 The mean difference is about **+2.6**, suggesting students score slightly higher on reading on average. With 200 students and a standard deviation of about 8, is this noise or signal?
 
-**Step 3 — Run the paired t-test.** `scipy.stats.ttest_rel` ("rel" for "related" / paired) takes the two columns directly and does the subtraction internally:
+**Step 3 — Run the paired t-test.** `scipy.stats.ttest_rel` ("rel" for "related" / paired) takes:
+
+- **two paired array arguments** — same length, same order. Element `i` of the second array is the partner of element `i` of the first (here, the same student's writing score paired with their reading score).
+
+It computes the differences `a − b` internally and runs a one-sample t-test against zero:
 
 ```{code-cell} ipython3
 t_stat, p_value = stats.ttest_rel(df["reading"], df["writing"])
