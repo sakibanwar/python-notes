@@ -455,7 +455,7 @@ Compare this to the previous output (the model with the gender dummy). Two thing
 ## Advanced: Log Transformations
 
 ```{note}
-**Optional on first read.** This subsection introduces the most useful trick from applied econometrics: putting variables in logs. If you're meeting regression for the first time, feel free to skip ahead, get comfortable with the basics, and return to this section later. We come back to log models in much more depth in Chapter 13's case study.
+**Optional on first read.** This subsection introduces the most useful trick from applied econometrics: putting variables in logs. If you're meeting regression for the first time, feel free to skip ahead, get comfortable with the basics, and return to this section later. We come back to log models in much more depth in Chapter 14's case study.
 ```
 
 Sometimes a straight line is a poor fit because the relationship is *multiplicative* rather than *additive*. A 10% pay rise on a \$100,000 salary (\$10,000) is much bigger than a 10% raise on a \$20,000 salary (\$2,000) — but in additive (level-level) terms it's a wildly different number. Logs let us think in proportional terms.
@@ -565,8 +565,8 @@ m4 = smf.ols("lwage ~ educ + exper + tenure + female", data=df).fit()
 
 Now that you can run a regression and interpret the output, two natural questions follow:
 
-- **"How do I get these results into my dissertation in Word?"** That's exactly what we tackle in the next chapter — Chapter 12 is dedicated to exporting regression tables, summary statistics, and Excel files in a way that survives data updates.
-- **"What if the relationship between x and y isn't a straight line, or the residuals look weird?"** Chapter 13 is a full case study using a hotels dataset, where we work through log transformations, polynomial terms, robust standard errors, and full diagnostic checks end-to-end.
+- **"How do I get these results into my dissertation in Word?"** That's exactly what we tackle in the next chapter — Chapter 13 is dedicated to exporting regression tables, summary statistics, and Excel files in a way that survives data updates.
+- **"What if the relationship between x and y isn't a straight line, or the residuals look weird?"** Chapter 14 is a full case study using a hotels dataset, where we work through log transformations, polynomial terms, robust standard errors, and full diagnostic checks end-to-end.
 
 ---
 

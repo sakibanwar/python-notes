@@ -19,14 +19,16 @@ chapters:
   - file: chapters/08_data_cleaning
     title: "8. Data Cleaning"
   - file: chapters/09_statistical_inference
-    title: "9. Statistical Inference"
-  - file: chapters/10_exploratory_analysis
-    title: "10. Exploratory Analysis"
-  - file: chapters/11_regression
-    title: "11. Introduction to Regression"
-  - file: chapters/12_exporting_results
-    title: "12. Exporting Results to Word and Excel"
-  - file: chapters/13_regression_case_study
-    title: "13. Regression Analysis: A Case Study"
-  - file: chapters/14_dashboards
-    title: "14. Creating Dashboards with Streamlit"
+    title: "9. Statistical Inference: Foundation"
+  - file: chapters/10_hypothesis_testing
+    title: "10. Statistical Inference: Hypothesis Testing"
+  - file: chapters/11_exploratory_analysis
+    title: "11. Exploratory Analysis"
+  - file: chapters/12_regression
+    title: "12. Introduction to Regression"
+  - file: chapters/13_exporting_results
+    title: "13. Exporting Results to Word and Excel"
+  - file: chapters/14_regression_case_study
+    title: "14. Regression Analysis: A Case Study"
+  - file: chapters/15_dashboards
+    title: "15. Creating Dashboards with Streamlit"

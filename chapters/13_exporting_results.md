@@ -10,7 +10,7 @@ This chapter is about closing that gap: getting your Python output **out of the 
 
 We'll start with the **headline tool — Stargazer** — because it's what produces the kind of regression tables you've actually seen in journal articles and economics textbooks. Then we'll cover a simpler built-in alternative (`summary_col`), how to export descriptive statistics to Excel, and the copy-paste workflow into Word.
 
-We'll keep using the `wage1` dataset from Chapter 11, so the regressions will feel familiar.
+We'll keep using the `wage1` dataset from Chapter 12, so the regressions will feel familiar.
 
 ```{warning}
 **Why not just take a screenshot?** Because the moment you fix a typo, drop an outlier, or update the data, your screenshot is wrong — and so is your dissertation. The whole point of these tools is **reproducibility**: if the data changes, you regenerate the file with one line of code, and your tables update automatically. No retyping, no copy-paste errors, no late-night panic the day before submission.
@@ -54,7 +54,7 @@ m2 = smf.ols("wage ~ educ + exper + tenure", data=df).fit()
 m3 = smf.ols("wage ~ educ + exper + tenure + female", data=df).fit()
 ```
 
-These three models should look familiar from Chapter 11 — a simple regression, a multiple regression, and a model with a gender dummy. The whole chapter will treat these as the headline results we want to communicate.
+These three models should look familiar from Chapter 12 — a simple regression, a multiple regression, and a model with a gender dummy. The whole chapter will treat these as the headline results we want to communicate.
 
 ---
 

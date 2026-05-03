@@ -59,13 +59,14 @@ python-notes/
 │   ├── 06_filtering.md / 06_filtering_stats.md
 │   ├── 07_grouping.md
 │   ├── 08_data_cleaning.md
-│   ├── 09_statistical_inference.md                  # Shared (was DA-only Hypothesis Testing)
-│   ├── 10_exploratory_analysis.md
-│   ├── 11_regression.md                              # Intro to regression (wage1, shared)
-│   ├── 12_exporting_results.md                       # Stargazer / Excel (shared)
-│   ├── 13_regression_case_study.md /
-│   │   13_regression_case_study_stats.md             # Vienna hotels case study
-│   └── 14_dashboards.md                              # Streamlit (shared)
+│   ├── 09_statistical_inference.md                  # Foundation: Normal/CLT/CIs (shared)
+│   ├── 10_hypothesis_testing.md                      # Hypothesis testing (shared)
+│   ├── 11_exploratory_analysis.md
+│   ├── 12_regression.md                              # Intro to regression (wage1, shared)
+│   ├── 13_exporting_results.md                       # Stargazer / Excel (shared)
+│   ├── 14_regression_case_study.md /
+│   │   14_regression_case_study_stats.md             # Vienna hotels case study
+│   └── 15_dashboards.md                              # Streamlit (shared)
 ├── data/
 │   ├── wage1.csv                                     # Wooldridge wage equation data
 │   ├── vienna_hotels.csv                             # for the case study
@@ -92,12 +93,13 @@ The book is published in two versions sharing most chapters: the **DA** version 
 | 6 | Filtering Data | `06_filtering.md` (DA) / `06_filtering_stats.md` (Stats) |
 | 7 | Grouping and Aggregating | `07_grouping.md` |
 | 8 | Data Cleaning | `08_data_cleaning.md` |
-| 9 | Statistical Inference | `09_statistical_inference.md` (shared) |
-| 10 | Exploratory Analysis | `10_exploratory_analysis.md` |
-| 11 | Intro to Regression (wage1) | `11_regression.md` (shared) |
-| 12 | Exporting Results to Word and Excel | `12_exporting_results.md` (shared) |
-| 13 | Regression Analysis: A Case Study (Vienna hotels) | `13_regression_case_study.md` (DA) / `13_regression_case_study_stats.md` (Stats) |
-| 14 | Streamlit Dashboards | `14_dashboards.md` (shared) |
+| 9 | Statistical Inference: Foundation | `09_statistical_inference.md` (shared) |
+| 10 | Statistical Inference: Hypothesis Testing | `10_hypothesis_testing.md` (shared) |
+| 11 | Exploratory Analysis | `11_exploratory_analysis.md` |
+| 12 | Intro to Regression (wage1) | `12_regression.md` (shared) |
+| 13 | Exporting Results to Word and Excel | `13_exporting_results.md` (shared) |
+| 14 | Regression Analysis: A Case Study (Vienna hotels) | `14_regression_case_study.md` (DA) / `14_regression_case_study_stats.md` (Stats) |
+| 15 | Streamlit Dashboards | `15_dashboards.md` (shared) |
 
 ## Exercise Format
 
