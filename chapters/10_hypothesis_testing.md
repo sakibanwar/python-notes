@@ -21,17 +21,21 @@ For example:
 
 Each of those is a **hypothesis test**. The framework is always the same — we'll see it in detail below — and we just plug in different formulas for different kinds of data (proportions, means, paired samples).
 
-```{code-cell} ipython3
-:tags: [remove-cell]
+## Setting Up
 
-# Imports for the plots, tests, and CIs used in this chapter — kept hidden
-# so students see the statistics rather than the plumbing.
+If you want to follow along in your own notebook (Jupyter, Colab, or anywhere else), import these libraries first. We'll use them throughout the chapter — proportion tests live in `statsmodels`, t-tests in `scipy.stats`, and the CI helpers in both:
+
+```{code-cell} ipython3
 import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.stats import ttest_ind, ttest_1samp, ttest_rel
 from statsmodels.stats.proportion import proportions_ztest, proportion_confint
 import matplotlib.pyplot as plt
+```
+
+```{tip}
+`statsmodels` ships with Anaconda by default. If you're on a fresh Python install and the `from statsmodels...` line errors, run `!pip install statsmodels` in a cell first.
 ```
 
 ---
