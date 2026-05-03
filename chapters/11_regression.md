@@ -1,174 +1,187 @@
+---
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Introduction to Regression
 
-Regression analysis is one of the most powerful tools in a data analyst's toolkit. It allows us to understand **relationships between variables** — how one variable changes when another changes. In business and economics, this helps us answer questions like:
+In the last chapter we used summary statistics, group means, and visualisations to *describe* our data. But describing data only takes us so far. To actually answer questions like "how much more do graduates earn than non-graduates?" or "does experience matter once we account for education?", we need a tool that goes further. That tool is **regression**.
 
-- How does distance from the city centre affect hotel prices?
-- Does advertising spending increase sales?
-- What factors predict employee performance?
+Regression is the workhorse of empirical economics and business analytics. It lets us:
 
-In this chapter, we'll learn how to run and interpret regression models using Python's `statsmodels` library.
+- Quantify how one variable changes when another changes
+- Hold other factors constant so we can isolate a single effect
+- Compare the size of different effects on the same outcome
+- Make predictions for new observations
+
+In this chapter we'll build up regression from the simplest possible case (one predictor) all the way to multiple regression with both numeric and categorical predictors. We'll work through everything using the classic `wage1` dataset from Wooldridge — exactly the kind of dataset you might see in your econometrics module.
+
+```{note}
+**About the dataset.** The `wage1` dataset comes from Wooldridge's *Introductory Econometrics* (2019, 7th edition, Cengage). It contains 526 observations from the 1976 U.S. Current Population Survey (CPS), with information on hourly wages and worker characteristics. We accessed it via the [`wooldridge` Python package](https://pypi.org/project/wooldridge/) and saved it as a CSV in this book's `data/` folder.
+
+Because the data is from 1976, the wage figures look low by today's standards (the average is about $5.90/hour). The *relationships* between variables, however, still illustrate the mechanics of regression beautifully — and they're directly comparable to examples you'll encounter in textbooks like Wooldridge or Békés & Kézdi.
+```
 
 ---
 
 ## What is Regression?
 
-At its core, regression finds the **best-fitting line** through your data. The equation for a simple linear regression is:
+At its heart, a regression finds the **best-fitting straight line** through your data. For a single predictor, the equation is:
 
 $$y = \alpha + \beta \cdot x + \epsilon$$
 
 Where:
-- **y** is the dependent variable (what we're trying to predict)
-- **x** is the independent variable (what we use to make predictions)
-- **α (alpha)** is the intercept (the value of y when x = 0)
-- **β (beta)** is the slope (how much y changes for each unit increase in x)
-- **ε (epsilon)** is the error term (the difference between predicted and actual values)
 
-The goal of regression is to estimate α and β so we can make predictions.
+- **y** is the dependent variable — what we're trying to explain (e.g., wage)
+- **x** is the independent variable — what we're using to explain it (e.g., years of education)
+- **α (alpha)** is the intercept — the value of y when x = 0
+- **β (beta)** is the slope — how much y changes for a one-unit increase in x
+- **ε (epsilon)** is the error term — everything we *haven't* captured
+
+The job of the regression is to estimate α and β from the data. Once we have them, we can interpret the slope, test whether it's statistically different from zero, and even predict y for new values of x.
 
 ---
 
 ## Setting Up
 
-Let's load our libraries and data. We'll use the **Vienna Hotels** dataset, which contains information about hotel prices and characteristics.
+Let's load our libraries and the `wage1` data:
 
-```python
+```{code-cell} ipython3
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.formula.api as smf
 
-# Load the Vienna hotels data
-hotels = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/vienna_hotels.csv")
+# Load the wage1 dataset from the book's data folder
+df = pd.read_csv("../data/wage1.csv")
+
+df.shape
 ```
 
 ```{tip}
-You can also [download the dataset](https://github.com/sakibanwar/python-notes/tree/main/data) and load it locally:
+**Running this code outside the book?** If you copy this code into Google Colab or your own notebook, the relative path `"../data/wage1.csv"` won't work. Replace it with the dataset's GitHub URL instead:
 
-    hotels = pd.read_csv("vienna_hotels.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/wage1.csv")
+
+That URL points to the same file in the book's GitHub repository and works from anywhere.
 ```
 
-```python
-hotels.shape
+We have 526 workers with 24 variables. Let's peek at the first few rows:
+
+```{code-cell} ipython3
+df.head()
 ```
 
-```
-(428, 24)
-```
+The variables we'll focus on are:
 
-We have 428 hotels with 24 variables. Let's see what we're working with:
-
-```python
-hotels.head()
-```
-
-```
-   country city_actual  rating_count center1label center2label  \
-0  Austria      Vienna          36.0  City centre    Donauturm
-1  Austria      Vienna         189.0  City centre    Donauturm
-2  Austria      Vienna          53.0  City centre    Donauturm
-
-  neighbourhood  price    city  stars  ratingta  ...  distance  rating
-0    17. Hernals     81  Vienna    4.0       4.5  ...       2.7     4.4
-1    17. Hernals     81  Vienna    4.0       3.5  ...       1.7     3.9
-2     Alsergrund     85  Vienna    4.0       3.5  ...       1.4     3.7
-```
-
-### Filtering the Data
-
-For our analysis, let's focus on 3-4 star hotels with reasonable prices:
-
-```python
-# Filter the data
-hotels = hotels[hotels["accommodation_type"] == "Hotel"]
-hotels = hotels[hotels["city_actual"] == "Vienna"]
-hotels = hotels[(hotels["stars"] >= 3) & (hotels["stars"] <= 4)]
-hotels = hotels[hotels["stars"].notnull()]
-hotels = hotels[hotels["price"] <= 600]
-
-print(f"Hotels remaining: {len(hotels)}")
-```
-
-```
-Hotels remaining: 207
-```
-
-We've filtered down to 207 hotels that are 3-4 stars in Vienna with prices under $600.
+| Variable | Meaning |
+|----------|---------|
+| `wage` | Hourly earnings, in 1976 US dollars |
+| `educ` | Years of education |
+| `exper` | Years of potential work experience |
+| `tenure` | Years with current employer |
+| `female` | 1 if female, 0 if male |
+| `married` | 1 if married, 0 if not |
+| `lwage` | Natural log of wage (already computed for us) |
 
 ---
 
 ## Exploring the Data First
 
-Before running a regression, we should always explore our data. Let's look at our two key variables: price and distance from the city centre.
+Before running any regression, you should always look at your data. Let's start with the summary statistics for our key variables:
 
-```python
-hotels.filter(["price", "distance"]).describe().T
+```{code-cell} ipython3
+df[["wage", "educ", "exper", "tenure", "female"]].describe().round(2)
 ```
 
-```
-          count        mean         std   min   25%    50%    75%   max
-price     207.0  109.975845   42.221381  50.0  82.0  100.0  129.5  383.0
-distance  207.0    1.529952    1.161507   0.0   0.8    1.3    1.9    6.6
-```
+A few things to notice:
 
-The average hotel price is about $110, and the average distance from the city centre is about 1.5 miles.
+- The average worker earns **$5.90/hour** (remember: 1976 dollars).
+- The typical worker has **12.56 years of education** — about a high-school diploma plus a bit of college.
+- The mean of `female` is **0.48**, meaning 48% of the sample are women.
 
 ### Visualising the Relationship
 
-A scatter plot shows us the relationship between distance and price:
+Education is the most natural starting predictor for wage. Let's see how the two relate:
 
-```python
-sns.scatterplot(data=hotels, x="distance", y="price", color="red", alpha=0.5)
-plt.xlabel("Distance to city center (miles)")
-plt.ylabel("Price (US dollars)")
-plt.title("Hotel Prices vs Distance from City Centre")
+```{code-cell} ipython3
+sns.scatterplot(data=df, x="educ", y="wage", alpha=0.5, color="steelblue")
+plt.xlabel("Years of education")
+plt.ylabel("Hourly wage ($)")
+plt.title("Wage vs Education")
 plt.show()
 ```
 
-```
-[Scatter plot showing a negative relationship - hotels closer to the
- city centre tend to be more expensive]
-```
-
-There appears to be a **negative relationship** — as distance increases, price tends to decrease. But how can we quantify this?
+There's clearly an upward trend: more education tends to come with higher wages. But notice the **enormous spread** at every level of education. Two workers with 12 years of schooling can earn very different wages. So while education matters, it's clearly not the *only* thing that matters. Regression will help us put a number on the average effect, despite that spread.
 
 ---
 
 ## Simple Linear Regression
 
-Let's fit a regression line to our data. In Python, we use `statsmodels`:
+Let's now fit our first regression: wage as a function of education. In Python we use the `statsmodels` library — specifically the `formula.api` interface, which we imported above as `smf`. Here's the line that does it:
 
-```python
-import statsmodels.formula.api as smf
+```{code-cell} ipython3
+model = smf.ols("wage ~ educ", data=df).fit()
+```
 
-# Fit the regression model
-model = smf.ols("price ~ distance", data=hotels).fit()
+That's a lot packed into one line. Let's unpack each piece, because every part of it is important.
 
-# Print the results
+### `smf.ols(...)` — pick the type of regression
+
+`ols` stands for **Ordinary Least Squares**. It's the classic way of fitting a regression line: find the line that minimises the sum of the squared distances between each data point and the line. There are other types of regression (logistic, robust, quantile…), but OLS is by far the most common, and "linear regression" almost always means "OLS regression" unless someone says otherwise.
+
+### The formula `"wage ~ educ"`
+
+The string inside the brackets is the **formula** — it tells `statsmodels` what we're predicting and what we're using as a predictor.
+
+The character that separates the two is the **tilde** `~`. Read it aloud as "predicted by". So:
+
+> *wage* predicted by *educ*
+
+This corresponds exactly to the equation we wrote earlier:
+
+$$\text{wage} = \alpha + \beta \cdot \text{educ} + \epsilon$$
+
+The variable on the **left of the tilde** is the dependent variable. The variable on the **right** is the independent variable. The names you put in the formula must match the column names in your DataFrame exactly — `statsmodels` is going to look them up there.
+
+```{tip}
+The formula syntax (`y ~ x`) comes from the R programming language, where it's used for everything from regression to ANOVA. If you ever take a stats course that uses R, you'll see exactly the same notation.
+```
+
+### `data=df` — where to find the columns
+
+This tells `statsmodels` *which* DataFrame contains the columns named `wage` and `educ`. Without it, Python wouldn't know where to look — `wage` and `educ` are just strings inside a formula until we connect them to actual data.
+
+### `.fit()` — actually estimate the model
+
+`smf.ols(...)` on its own only **defines** the model — it doesn't compute anything yet. The `.fit()` method is what actually crunches the numbers and estimates α and β from the data. The result gets stored in our variable `model`.
+
+```{warning}
+A common beginner mistake is forgetting `.fit()`. If you do, you'll get an unfitted model object back — there will be no coefficients to look at, and trying to look at the summary later will fail. Always remember to chain `.fit()` on the end.
+```
+
+### Looking at the results: `model.summary()`
+
+Once the model is fitted, all the results — coefficients, standard errors, p-values, R-squared, the lot — are stored inside the `model` object. The simplest way to see them is the `summary()` method:
+
+```{code-cell} ipython3
 print(model.summary())
 ```
 
-```
-                            OLS Regression Results
-==============================================================================
-Dep. Variable:                  price   R-squared:                       0.157
-Model:                            OLS   Adj. R-squared:                  0.153
-Method:                 Least Squares   F-statistic:                     38.20
-Date:                Fri, 03 May 2024   Prob (F-statistic):           3.39e-09
-Time:                        16:24:25   Log-Likelihood:                -1050.3
-No. Observations:                 207   AIC:                             2105.
-Df Residuals:                     205   BIC:                             2111.
-Df Model:                           1
-Covariance Type:            nonrobust
-==============================================================================
-                 coef    std err          t      P>|t|      [0.025      0.975]
-------------------------------------------------------------------------------
-Intercept    132.0170      4.474     29.511      0.000     123.197     140.837
-distance     -14.4064      2.331     -6.181      0.000     -19.002      -9.811
-==============================================================================
-```
+That's a lot of output! Don't let it intimidate you — it's organised into three blocks:
 
-That's a lot of output! Let's break down the key parts.
+1. **Top block** — overall model statistics: R-squared, sample size, F-statistic.
+2. **Middle block** — the coefficient table. This is the part you'll spend most of your time looking at.
+3. **Bottom block** — diagnostic tests for things like normality of residuals. We'll come back to those in the case-study chapter.
+
+Let's go through them in turn.
 
 ---
 
@@ -176,494 +189,384 @@ That's a lot of output! Let's break down the key parts.
 
 ### The Coefficients
 
-The most important numbers are in the coefficient table:
+The numbers in the coefficient table are the heart of the output:
 
-| Variable | Coefficient | Interpretation |
-|----------|-------------|----------------|
-| Intercept | 132.02 | When distance = 0, predicted price is $132.02 |
-| distance | -14.41 | For each additional mile from centre, price decreases by $14.41 |
+| Variable | Coefficient | What it means |
+|----------|-------------|---------------|
+| `Intercept` | -0.90 | Predicted wage when `educ = 0` (a person with zero years of schooling) |
+| `educ` | 0.54 | For each additional year of education, wage increases by about **$0.54/hour** |
 
-So our regression equation is:
+So our estimated regression equation is:
 
-$$\text{price} = 132.02 - 14.41 \times \text{distance}$$
+$$\widehat{\text{wage}} = -0.90 + 0.54 \times \text{educ}$$
 
-This tells us:
-- A hotel right in the city centre (distance = 0) would be predicted to cost $132.02
-- Each mile further from the centre reduces the price by about $14.41
+A worker with 12 years of schooling is therefore predicted to earn:
 
-### Statistical Significance
+$$-0.90 + 0.54 \times 12 = 5.58 \text{ dollars/hour}$$
 
-The **p-value** (P>|t|) tells us whether each coefficient is statistically significant:
+```{note}
+Don't read too much into the negative intercept. It's the predicted wage for someone with **zero** years of education — but almost no one in the sample has zero years of education, so we're extrapolating well outside the cloud of data. Intercepts often look strange. The slope is usually what we care about.
+```
 
-- **Intercept p-value**: 0.000 (highly significant)
-- **Distance p-value**: 0.000 (highly significant)
+### Statistical Significance: the p-value
 
-A p-value less than 0.05 is typically considered statistically significant. Both our coefficients are highly significant, meaning we can be confident the relationship is real, not just random noise.
+The column **`P>|t|`** (the p-value) tells us whether each coefficient is statistically different from zero. A small p-value means it's unlikely we'd see a coefficient this large just by random chance if the *true* effect were zero.
+
+- The coefficient on `educ` has a p-value of **0.000** — extremely strong evidence that education really does have a non-zero effect on wages.
+- The intercept has a p-value of 0.187 — meaning we can't reject the hypothesis that the *true* intercept is zero. That's fine; we usually don't care about the intercept's significance.
+
+The convention is to call a coefficient "statistically significant" when its p-value is below 0.05.
 
 ### Confidence Intervals
 
-The **[0.025, 0.975]** columns show the 95% confidence interval for each coefficient:
+The columns **`[0.025  0.975]`** give the 95% confidence interval for each coefficient. For `educ`, the interval is `[0.437, 0.646]`.
 
-- Distance coefficient: [-19.00, -9.81]
+In plain English: we're 95% confident that the true effect of one extra year of education on wages is somewhere between **44 cents and 65 cents per hour**. Notice the interval doesn't contain zero — another way of saying the coefficient is statistically significant.
 
-We're 95% confident the true effect of distance is between -$19.00 and -$9.81 per mile.
+### R-squared: How Well Does the Model Fit?
 
-### R-squared: How Good is Our Model?
+The number **R-squared = 0.165** tells us that education explains about **16.5%** of the variation in wages.
 
-**R-squared = 0.157** means our model explains about 15.7% of the variation in hotel prices.
+Is that good? It depends on what you're modelling. In economics, R² values for cross-sectional models on individual-level data are often modest like this — there's a lot more to wages than education alone. We'll improve the R² as we add more predictors.
 
-Is that good? Well, it depends:
-- It means distance alone doesn't fully explain price differences
-- Other factors (star rating, amenities, reviews) also matter
-- But distance does have a statistically significant effect
+```{tip}
+R-squared always lies between 0 and 1.
 
-```{note}
-R-squared ranges from 0 to 1. Higher values mean the model explains more of the variation in the dependent variable. An R-squared of 0.157 means 15.7% of price variation is explained by distance alone.
+- An R² of 0 means the model explains nothing.
+- An R² of 1 means the model fits the data perfectly (very rare with real-world data).
+
+In economics, R² in the 0.1–0.4 range is common for individual-level regressions and shouldn't make you panic.
 ```
 
 ---
 
 ## Visualising the Regression Line
 
-Seaborn makes it easy to plot the regression line with the data:
+A picture is the easiest way to see what the regression has done. Seaborn's `regplot()` draws the data and the fitted line in one go:
 
-```python
-sns.lmplot(
-    x="distance", y="price", data=hotels,
-    scatter_kws={"color": "red", "alpha": 0.5, "s": 20},
-    line_kws={"color": "blue"},
-    ci=None  # Don't show confidence interval
+```{code-cell} ipython3
+sns.regplot(
+    data=df, x="educ", y="wage", ci=None,
+    scatter_kws={"alpha": 0.4, "color": "steelblue"},
+    line_kws={"color": "red"}
 )
-plt.xlabel("Distance to city center (miles)")
-plt.ylabel("Price (US dollars)")
+plt.xlabel("Years of education")
+plt.ylabel("Hourly wage ($)")
+plt.title("Wage vs Education with Fitted Regression Line")
 plt.show()
 ```
 
+The red line is exactly the equation we computed above. Notice how it **summarises** the cloud of points with a single straight line — that's all a simple regression really is.
+
+### What are `scatter_kws` and `line_kws`?
+
+These are the two arguments that probably look most unfamiliar in the call above. They let us style the **scatter points** and the **regression line** *separately*. Each is a Python dictionary of styling options:
+
+- **`scatter_kws={"alpha": 0.4, "color": "steelblue"}`** — styles the points.
+  - `alpha=0.4` makes the points partially transparent (where 0 is fully transparent and 1 is fully opaque). Transparency matters here because a lot of workers in our sample share the same education value (almost everyone has 12, 14, or 16 years of schooling), so without transparency the points pile on top of each other and you can't tell where the data is densest.
+  - `color="steelblue"` sets the colour of the points.
+- **`line_kws={"color": "red"}`** — styles the fitted regression line. We've just set its colour to red so it stands out clearly against the blue points.
+
+You can pass **any** matplotlib styling keyword through either dictionary — `marker` (point shape), `s` (point size), `linestyle`, `linewidth`, and so on — and seaborn will hand them straight through to the underlying matplotlib call. Why two separate dictionaries? Because seaborn needs to know which styling applies to the points and which applies to the line; bundling them together would be ambiguous.
+
+```{tip}
+The `ci=None` argument hides the shaded confidence band. Try setting it to `ci=95` to see the 95% confidence band around the fitted line — it's a nice visual cue for how precisely the line is estimated at different values of x.
 ```
-[Scatter plot with a downward-sloping blue regression line through the
- red data points]
-```
-
-The blue line shows our predicted prices at each distance. Notice how the actual prices (red dots) scatter around this line — that scatter is what R-squared measures.
-
----
-
-## Comparing Groups: Close vs Far
-
-Before diving into regression, a simpler approach is to compare group means. Let's create a binary variable for "close" vs "far" hotels:
-
-```python
-# Create a binary variable: Far if distance >= 2 miles, Close otherwise
-hotels["dist_category"] = np.where(hotels["distance"] >= 2, "Far", "Close")
-
-# Calculate mean price for each group
-hotels.groupby("dist_category")["price"].agg(["mean", "count"])
-```
-
-```
-               mean  count
-dist_category
-Close        116.43    157
-Far           89.72     50
-```
-
-Hotels close to the centre (< 2 miles) cost on average $116.43, while those further away average $89.72 — a difference of about $27!
-
-### Visualising Group Differences
-
-A box plot shows the full distribution for each group:
-
-```python
-sns.boxplot(data=hotels, x="dist_category", y="price")
-plt.xlabel("Distance Category")
-plt.ylabel("Price (US dollars)")
-plt.title("Hotel Prices: Close vs Far from City Centre")
-plt.show()
-```
-
-```
-[Box plot showing "Close" hotels with higher median and wider spread
- than "Far" hotels]
-```
-
-The "Close" box is higher (higher median price) and has more spread (more price variation).
 
 ---
 
 ## Making Predictions
 
-One key use of regression is making predictions. We can extract the predicted values:
+One useful thing about a regression model is that it lets us predict y for any value of x. In `statsmodels`, the `.fittedvalues` attribute gives us the predicted wage for every observation in the data, and `.resid` gives us the residual (actual minus predicted):
 
-```python
-# Add predicted prices to our dataframe
-hotels["predicted_price"] = model.fittedvalues
-hotels["residual"] = model.resid  # Actual - Predicted
+```{code-cell} ipython3
+df["predicted"] = model.fittedvalues
+df["residual"] = model.resid
 
-# Look at a few examples
-hotels[["distance", "price", "predicted_price", "residual"]].head()
+df[["wage", "educ", "predicted", "residual"]].head()
 ```
 
-```
-   distance  price  predicted_price   residual
-1       1.7     81       107.526056 -26.526056
-2       1.4     85       111.847984 -26.847984
-3       1.7     83       107.526056 -24.526056
-4       1.2     82       114.729269 -32.729269
-6       0.9    103       119.051194 -16.051194
-```
+A **negative residual** means the worker earns *less* than the model predicts; a **positive residual** means they earn more.
 
-The **residual** is the prediction error: actual price minus predicted price.
+### Who Are the "Underpaid" and "Overpaid"?
 
-### Finding Underpriced Hotels
+We can sort by residual to find the workers whose actual wages most differ from the model's prediction:
 
-Which hotels are the best deals? Those with the most negative residuals (priced below what the model predicts):
-
-```python
-hotels.nsmallest(5, "residual")[["distance", "price", "predicted_price", "residual"]]
+```{code-cell} ipython3
+# 5 workers earning much more than the model predicts
+df.nlargest(5, "residual")[["wage", "educ", "predicted", "residual"]]
 ```
 
-```
-     distance  price  predicted_price   residual
-153       1.1     54       116.169910 -62.169910
-10        1.1     60       116.169910 -56.169910
-211       1.0     63       117.610552 -54.610552
-426       1.4     58       111.847984 -53.847984
-163       0.9     68       119.051194 -51.051194
-```
-
-These hotels are priced $50-62 less than the model would predict based on their location!
-
-### Finding Overpriced Hotels
-
-Conversely, which hotels are priced above what we'd expect?
-
-```python
-hotels.nlargest(5, "residual")[["distance", "price", "predicted_price", "residual"]]
-```
-
-```
-     distance  price  predicted_price    residual
-247       1.9    383       104.644774  278.355226
-26        2.9    208        90.238353  117.761647
-128       0.0    242       132.016973  109.983027
-110       0.1    231       130.576331  100.423669
-129       0.5    223       124.813762   98.186238
-```
-
-One hotel costs $383 but the model predicts only $105 — it's $278 more expensive than expected. Perhaps it has luxury amenities we haven't accounted for!
+These are the workers whose hourly wages are dramatically higher than education alone would predict — perhaps they have lots of experience, work in lucrative industries, or simply got lucky on the labour market. **The point of looking at residuals is exactly this**: they show what's left unexplained when we use only one variable. It's a hint that we need more predictors.
 
 ---
 
-## Checking Model Fit: Residual Distribution
+## Multiple Regression
 
-A good regression model should have residuals (errors) that are roughly normally distributed around zero. Let's check:
+Education isn't the only thing that determines wages. What about work experience? What about how long someone has been with their current employer? **Multiple regression** lets us include several predictors in the same model.
 
-```python
-sns.histplot(data=hotels, x="residual", bins=20, color="blue", alpha=0.7)
-plt.xlabel("Residual (Actual - Predicted)")
-plt.ylabel("Count")
-plt.title("Distribution of Prediction Errors")
-plt.axvline(x=0, color="red", linestyle="--", label="Zero")
-plt.show()
+The good news: the syntax barely changes. We still use `smf.ols(...)`, the formula still has `~` separating the outcome from the predictors, and we still call `.fit()`. The only difference is that we add more variables to the **right-hand side** of the tilde, separated by `+`:
+
+```{code-cell} ipython3
+model_multi = smf.ols("wage ~ educ + exper + tenure", data=df).fit()
+print(model_multi.summary())
 ```
 
-```
-[Histogram showing most residuals clustered around 0, with a slight
- right skew due to some overpriced hotels]
+The formula `"wage ~ educ + exper + tenure"` reads as:
+
+> *wage* predicted by *educ*, *exper*, and *tenure*
+
+which corresponds to the equation:
+
+$$\text{wage} = \alpha + \beta_1 \cdot \text{educ} + \beta_2 \cdot \text{exper} + \beta_3 \cdot \text{tenure} + \epsilon$$
+
+Each predictor now has its own coefficient (β₁, β₂, β₃), and `statsmodels` estimates all of them at the same time.
+
+```{warning}
+The `+` in a formula is **not** mathematical addition — it's just shorthand for "include this variable as another predictor". Whether you write `educ + exper` or `exper + educ` makes no difference to the result; the order of predictors doesn't matter.
 ```
 
-Most residuals are near zero (good!), but there's a right skew due to some expensive outliers.
+Three things jumped:
+
+1. **R-squared rose from 0.165 to 0.306** — adding `exper` and `tenure` nearly doubled the variation we can explain.
+2. **The coefficient on `educ` shifted slightly**, from 0.54 to 0.60. Why? Because in the simple regression, `educ` was implicitly picking up some of the effect of variables correlated with it (like experience). Now those effects are separated out.
+3. **A new phrase enters the interpretation**: "holding other variables constant".
+
+### Interpreting the New Coefficients
+
+- **`educ`**: *Holding experience and tenure constant*, each additional year of education increases the predicted wage by **$0.60/hour**.
+- **`tenure`**: *Holding education and experience constant*, each additional year with the current employer adds about **$0.17/hour**.
+- **`exper`**: *Holding education and tenure constant*, each year of experience adds only **$0.02/hour** — and the p-value (0.064) means this isn't quite statistically significant at the 5% level.
+
+The phrase "holding constant" (sometimes called "controlling for") is the key idea behind multiple regression. When you read a coefficient, mentally append "all else equal" — that's what the partial coefficient represents.
+
+### Predicting a New Worker's Wage
+
+Let's predict the wage for a worker with 16 years of education, 5 years of experience, and 2 years of tenure:
+
+```{code-cell} ipython3
+# Plug in the values
+predicted = (model_multi.params["Intercept"]
+             + model_multi.params["educ"]   * 16
+             + model_multi.params["exper"]  * 5
+             + model_multi.params["tenure"] * 2)
+print(f"Predicted wage: ${predicted:.2f}/hour")
+```
+
+In 1976 dollars, $7.16/hour for a recent graduate looks reasonable. Try changing the values and see how the prediction shifts!
+
+---
+
+## Dummy Variables: Adding a Categorical Predictor
+
+So far all our predictors have been numeric. But many interesting variables are **categorical** — yes/no, male/female, in-the-city/not. To use these in a regression, we encode them as **dummy variables**: 0 for "no", 1 for "yes".
+
+In `wage1` the variable `female` is already coded this way: `1` if the worker is female, `0` if male. Let's see what happens when we add it to the model:
+
+```{code-cell} ipython3
+model_dummy = smf.ols("wage ~ educ + exper + tenure + female", data=df).fit()
+print(model_dummy.summary())
+```
+
+The coefficient on `female` is **-1.81**, with a p-value of 0.000. Here's how to read it:
+
+> *Holding education, experience, and tenure constant, women in this sample earn about $1.81 less per hour than men, on average.*
+
+That's a substantial gender wage gap — and notice that we're not just comparing average male and female wages (which would mix in differences in education, experience, etc.). We're comparing male and female workers *with the same education, experience, and tenure*. This is the central reason multiple regression is so powerful.
+
+```{note}
+A binary dummy is the simplest categorical variable. The reference category — what the dummy is being compared to — is whichever level is coded as 0. Here, **men (`female = 0`) are the reference group**, and the coefficient -1.81 tells us how women's wages compare to men's, holding everything else constant.
+```
+
+### Sanity Check: Mean Wage by Gender
+
+Just to confirm we're not making things up, here are the raw mean wages by gender:
+
+```{code-cell} ipython3
+df.groupby("female")["wage"].agg(["mean", "count"]).round(2)
+```
+
+The raw difference is **\$2.51/hour**. Our regression coefficient is \$1.81 — *smaller* in magnitude. The gap shrinks once we control for education, experience, and tenure, because women in this sample have, on average, slightly less work experience. The remaining \$1.81 is what *can't* be explained by those three variables.
+
+---
+
+## R-squared vs Adjusted R-squared
+
+You might have noticed that R-squared keeps going up as we add variables. Compare our three models:
+
+| Model | Predictors | R² | Adjusted R² |
+|-------|------------|------|-------------|
+| Simple | `educ` | 0.165 | 0.163 |
+| Multiple | `educ + exper + tenure` | 0.306 | 0.302 |
+| With dummy | `educ + exper + tenure + female` | 0.364 | 0.359 |
+
+Here's the trap: **R-squared *always* increases when you add a variable, even if the new variable is total nonsense.** That's because pure random noise will explain at least *some* variation by chance.
+
+Adjusted R-squared fixes this by applying a penalty for each additional variable. If the new variable genuinely helps, adjusted R² rises. If it's just noise, adjusted R² may even fall.
+
+| Metric | What it measures | When to use it |
+|--------|------------------|----------------|
+| **R²** | Proportion of variance explained | Any model — but be cautious comparing models of different sizes |
+| **Adjusted R²** | R² with a penalty for extra predictors | Comparing models with **different** numbers of predictors |
+
+```{tip}
+Whenever you compare regression models with different numbers of variables, **report adjusted R²**. If a new variable raises R² but lowers adjusted R², it's probably not pulling its weight.
+```
 
 ---
 
 ## Robust Standard Errors
 
-In real-world data, the spread of residuals often varies at different values of x (this is called **heteroskedasticity**). We can use robust standard errors to account for this:
+There's one final adjustment we should always consider before treating any regression as final.
 
-```python
-# Fit with robust standard errors
-model_robust = smf.ols("price ~ distance", data=hotels).fit(cov_type="HC3")
+The standard errors in the output we've seen so far are based on a strong assumption: that the variance of the regression errors is the **same at every value of x**. This is called **homoskedasticity**. But in real-world data — especially cross-sectional data like ours — the variance often *isn't* constant. The spread of wages around the prediction is much wider for highly-paid workers than for the lowest-paid, for example. That's called **heteroskedasticity** (literally, "different scatter").
+
+When heteroskedasticity is present, the *coefficients* you estimate are still fine, but the *standard errors* are wrong — and that means the p-values and confidence intervals are wrong too. Luckily there's an easy fix: compute the standard errors in a way that doesn't assume constant variance. These are called **heteroskedasticity-robust standard errors** (or just "robust SEs", or "HC errors" — proposed by the econometrician Halbert White, whose surname lives on in the HC abbreviation).
+
+In `statsmodels`, you ask for them by passing **one extra argument to `.fit()`**:
+
+```{code-cell} ipython3
+model_robust = smf.ols("wage ~ educ + exper + tenure + female", data=df).fit(cov_type="HC3")
 print(model_robust.summary())
 ```
 
+The `cov_type="HC3"` argument is what selects the robust calculation. There are several variants — `HC0`, `HC1`, `HC2`, `HC3` — but `HC3` is the modern default in econometrics, so we'll stick with that.
+
+Compare this to the previous output (the model with the gender dummy). Two things to notice:
+
+| Variable | Default SE | Robust (HC3) SE |
+|----------|------------|-----------------|
+| `Intercept` | 0.725 | 0.838 |
+| `educ` | 0.049 | 0.062 |
+| `tenure` | 0.021 | 0.029 |
+
+**The coefficients didn't move at all.** That's the whole point — robust SEs only adjust the *uncertainty* around each estimate, not the estimates themselves. The standard errors did move, and in this case several got bigger. Look closely at the intercept: its p-value went from 0.031 (significant at the 5% level) to 0.061 (not significant). For the `educ` coefficient the shift is small enough not to matter, but in a different dataset it could easily flip a borderline result the other way.
+
+```{note}
+**Why does the column header say `z` instead of `t`?** Once you ask for robust standard errors, `statsmodels` uses a normal distribution for inference rather than a t-distribution (which assumes homoskedasticity). For sample sizes above ~30 the practical difference is negligible, but that's why the column heading changes.
 ```
-                            OLS Regression Results
-==============================================================================
-                 coef    std err          z      P>|z|      [0.025      0.975]
-------------------------------------------------------------------------------
-Intercept    132.0170      4.876     27.072      0.000     122.459     141.575
-distance     -14.4064      2.718     -5.301      0.000     -19.733      -9.080
-==============================================================================
-Notes:
-[1] Standard Errors are heteroscedasticity robust (HC3)
-```
-
-Notice the coefficients are the same, but the standard errors are slightly different. The conclusions don't change here, but robust standard errors are generally safer to use.
-
----
-
-## Log Transformations
-
-Sometimes relationships aren't linear. **Log transformations** can help capture non-linear patterns and have useful interpretations.
-
-### Creating Log Variables
-
-```python
-# Create log-transformed variables
-hotels["ln_price"] = np.log(hotels["price"])
-hotels["ln_distance"] = np.log(hotels["distance"].clip(lower=0.05))  # Avoid log(0)
-```
-
-```{warning}
-You can't take the log of zero or negative numbers. If your variable has zeros, you can either:
-- Add a small constant (e.g., `log(x + 1)`)
-- Use a minimum value (e.g., `clip(lower=0.05)`)
-```
-
-### Four Types of Regression Models
-
-| Model Type | Equation | Interpretation of β |
-|------------|----------|---------------------|
-| Level-Level | price ~ distance | 1-unit increase in x → β change in y |
-| Level-Log | price ~ ln(distance) | 1% increase in x → β/100 change in y |
-| Log-Level | ln(price) ~ distance | 1-unit increase in x → β×100% change in y |
-| Log-Log | ln(price) ~ ln(distance) | 1% increase in x → β% change in y |
-
-Let's run all four:
-
-### 1. Level-Level (Our Original Model)
-
-```python
-reg1 = smf.ols("price ~ distance", data=hotels).fit()
-print(f"Coefficient: {reg1.params['distance']:.4f}")
-print(f"R-squared: {reg1.rsquared:.3f}")
-```
-
-```
-Coefficient: -14.4064
-R-squared: 0.157
-```
-
-**Interpretation**: Each additional mile from the centre reduces price by $14.41.
-
-### 2. Level-Log
-
-```python
-reg2 = smf.ols("price ~ ln_distance", data=hotels).fit()
-print(f"Coefficient: {reg2.params['ln_distance']:.4f}")
-print(f"R-squared: {reg2.rsquared:.3f}")
-```
-
-```
-Coefficient: -24.7683
-R-squared: 0.280
-```
-
-**Interpretation**: A 1% increase in distance reduces price by about $0.25 (coefficient ÷ 100).
-
-Notice the R-squared is higher (0.280 vs 0.157) — the level-log model fits better!
-
-### 3. Log-Level
-
-```python
-reg3 = smf.ols("ln_price ~ distance", data=hotels).fit()
-print(f"Coefficient: {reg3.params['distance']:.4f}")
-print(f"R-squared: {reg3.rsquared:.3f}")
-```
-
-```
-Coefficient: -0.1313
-R-squared: 0.205
-```
-
-**Interpretation**: Each additional mile from the centre reduces price by about 13.1%.
-
-### 4. Log-Log
-
-```python
-reg4 = smf.ols("ln_price ~ ln_distance", data=hotels).fit()
-print(f"Coefficient: {reg4.params['ln_distance']:.4f}")
-print(f"R-squared: {reg4.rsquared:.3f}")
-```
-
-```
-Coefficient: -0.2158
-R-squared: 0.334
-```
-
-**Interpretation**: A 1% increase in distance reduces price by about 0.22%.
-
-The log-log model has the highest R-squared (0.334), explaining 33.4% of price variation!
-
-### Comparing Models
-
-| Model | R-squared | Best for... |
-|-------|-----------|-------------|
-| Level-Level | 0.157 | Simple interpretation |
-| Level-Log | 0.280 | When effect diminishes at higher x |
-| Log-Level | 0.205 | When y changes by percentage |
-| Log-Log | 0.334 | When both change by percentages (elasticity) |
 
 ```{tip}
-In economics, the **log-log model** gives you the **elasticity** — how responsive one variable is to percentage changes in another. An elasticity of -0.22 means a 10% increase in distance leads to a 2.2% decrease in price.
+**Rule of thumb in applied work**: if you're running a cross-sectional regression on individuals, firms, or countries, just pass `cov_type="HC3"` by default. The cost is one extra argument; the benefit is you don't get caught out by hidden heteroskedasticity. Békés & Kézdi follow this convention throughout their textbook, and most empirical economics papers do the same.
 ```
 
 ---
 
-## Polynomial Regression
+## Advanced: Log Transformations
 
-What if the relationship is curved rather than straight? We can add polynomial terms (squared, cubed) to capture curvature.
-
-### Adding Squared Term
-
-```python
-# Create squared distance
-hotels["distance_sq"] = hotels["distance"] ** 2
-
-# Fit quadratic model
-reg_quad = smf.ols("price ~ distance + distance_sq", data=hotels).fit()
-print(reg_quad.summary())
+```{note}
+**Optional on first read.** This subsection introduces the most useful trick from applied econometrics: putting variables in logs. If you're meeting regression for the first time, feel free to skip ahead, get comfortable with the basics, and return to this section later. We come back to log models in much more depth in Chapter 13's case study.
 ```
 
+Sometimes a straight line is a poor fit because the relationship is *multiplicative* rather than *additive*. A 10% pay rise on a \$100,000 salary (\$10,000) is much bigger than a 10% raise on a \$20,000 salary (\$2,000) — but in additive (level-level) terms it's a wildly different number. Logs let us think in proportional terms.
+
+The four model types you'll see in econometrics are:
+
+| Name | Equation | Interpretation of β |
+|------|----------|---------------------|
+| **Level-Level** | y = α + β·x | A 1-unit increase in x → β-unit change in y |
+| **Log-Level**   | ln(y) = α + β·x | A 1-unit increase in x → roughly **β × 100%** change in y |
+| **Level-Log**   | y = α + β·ln(x) | A 1% increase in x → about **β/100** unit change in y |
+| **Log-Log**     | ln(y) = α + β·ln(x) | A 1% increase in x → about **β%** change in y (this is an **elasticity**) |
+
+The most common in wage equations is the **log-level** model — `ln(wage)` regressed on `educ`. The coefficient on education then has a percentage interpretation, which is much more natural than dollars.
+
+Conveniently, `wage1` already includes a column called `lwage`, which is just `np.log(wage)`. Let's run all four models and put the results side by side.
+
+### Setting Up the Models
+
+```{code-cell} ipython3
+# Create log of educ for the level-log and log-log models
+df["ln_educ"] = np.log(df["educ"].clip(lower=1))   # clip avoids log(0)
+
+m_level_level = smf.ols("wage  ~ educ",    data=df).fit()
+m_log_level   = smf.ols("lwage ~ educ",    data=df).fit()
+m_level_log   = smf.ols("wage  ~ ln_educ", data=df).fit()
+m_log_log     = smf.ols("lwage ~ ln_educ", data=df).fit()
 ```
-==============================================================================
-                 coef    std err          t      P>|t|      [0.025      0.975]
-------------------------------------------------------------------------------
-Intercept    154.8580      6.045     25.617      0.000     142.939     166.777
-distance     -46.0140      6.394     -7.197      0.000     -58.620     -33.408
-distance_sq    6.9277      1.316      5.263      0.000       4.332       9.523
-==============================================================================
-R-squared: 0.258
-```
-
-The squared term is statistically significant (p < 0.05), suggesting a curved relationship!
-
-**Interpretation**: The negative coefficient on distance and positive coefficient on distance_sq means prices fall quickly at first, then level off further from the centre.
-
-### Visualising the Curve
-
-```python
-sns.lmplot(
-    x="distance", y="price", data=hotels,
-    order=2,  # Polynomial order
-    scatter_kws={"color": "red", "alpha": 0.6},
-    line_kws={"color": "blue"}
-)
-plt.xlabel("Distance to city center (miles)")
-plt.ylabel("Price (US dollars)")
-plt.title("Quadratic Fit: Price vs Distance")
-plt.show()
-```
-
-```
-[Scatter plot with a curved blue line that drops steeply at first
- then flattens out at greater distances]
-```
-
-The curve captures how the price premium for central locations is strongest for hotels very close to the centre.
-
-### Adding Cubic Term
-
-We can add a cubic term for even more flexibility:
-
-```python
-hotels["distance_cb"] = hotels["distance"] ** 3
-
-reg_cubic = smf.ols("price ~ distance + distance_sq + distance_cb", data=hotels).fit()
-print(f"R-squared: {reg_cubic.rsquared:.3f}")
-```
-
-```
-R-squared: 0.276
-```
-
-The R-squared improves slightly, but be careful — adding too many polynomial terms can lead to **overfitting**, where the model captures noise rather than true patterns.
-
----
-
-## Comparing Multiple Models
-
-The `stargazer` package creates publication-quality regression tables:
-
-```python
-# Install if needed: pip install stargazer
-from stargazer.stargazer import Stargazer
-
-# Create comparison table
-table = Stargazer([reg1, reg2, reg_quad])
-table.custom_columns(["Level-Level", "Level-Log", "Quadratic"], [1, 1, 1])
-table.rename_covariates({"Intercept": "Constant"})
-```
-
-This creates a side-by-side comparison showing coefficients, standard errors, and fit statistics for each model.
-
----
-
-## Key Regression Concepts Summary
-
-| Concept | What It Tells You |
-|---------|-------------------|
-| **Coefficient (β)** | The effect of x on y |
-| **Standard Error** | Uncertainty in the coefficient estimate |
-| **t-statistic** | Coefficient ÷ Standard Error |
-| **p-value** | Probability of seeing this result if true effect is zero |
-| **R-squared** | Proportion of y variation explained by the model |
-| **Adjusted R-squared** | R-squared penalised for adding more variables |
-| **Residuals** | Actual - Predicted values |
-
----
-
-## When to Use Which Model
-
-| Situation | Recommended Model |
-|-----------|-------------------|
-| Simple relationship, easy interpretation | Level-Level |
-| Diminishing returns | Level-Log |
-| Percentage changes in outcome | Log-Level |
-| Elasticity / percentage relationships | Log-Log |
-| Curved relationship | Polynomial |
 
 ```{warning}
-**Correlation is not causation!** Our regression shows that distance and price are associated, but it doesn't prove that distance *causes* price differences. There could be confounding factors — perhaps cheaper hotels locate further out because land is cheaper, not because guests demand lower prices.
+You can't take the natural log of zero or a negative number — Python will give you `-inf` or `nan`. The `.clip(lower=1)` trick replaces any zero values with 1 (so `ln(1) = 0`) before taking the log. There are 6 workers in `wage1` with zero years of education; this nudge avoids breaking the model.
 ```
+
+### The Headline Result: Log-Level
+
+Let's look at the log-level model first, since it's the most common:
+
+```{code-cell} ipython3
+print(f"Coefficient on educ (log-level): {m_log_level.params['educ']:.4f}")
+print(f"R-squared:                       {m_log_level.rsquared:.4f}")
+```
+
+The coefficient is **0.083**. Multiplied by 100, that's **8.3%**:
+
+> Each additional year of education is associated with about an **8.3% increase in hourly wage**, holding everything else constant.
+
+That's the famous "**return to education**" result — and 8% per year of schooling is very close to numbers reported across decades and countries.
+
+### Comparing All Four Specifications
+
+Here are the four models side by side:
+
+| Model | Equation | Coefficient | R² | Interpretation |
+|-------|----------|-------------|------|----------------|
+| Level-Level | `wage ~ educ` | 0.541 | 0.165 | One more year of educ → **$0.54/hour** more |
+| Log-Level   | `lwage ~ educ` | 0.083 | 0.186 | One more year of educ → **8.3%** more |
+| Level-Log   | `wage ~ ln(educ)` | 4.105 | 0.106 | A 1% increase in educ → **$0.04/hour** more |
+| Log-Log     | `lwage ~ ln(educ)` | 0.637 | 0.123 | A 1% increase in educ → **0.64%** more (elasticity) |
+
+```{tip}
+**Which one should I use?** In practice, **log-level** is by far the most common form for wage equations because the coefficient gives you a clean percentage change for each additional unit of x. You'll see it written as `ln(wage)` (or `log(wage)`) in nearly every empirical labour economics paper.
+```
+
+For our purposes, the takeaway is: **the choice of functional form matters**. The same data can produce very different-looking coefficients depending on whether the variables are in levels or logs, and you should pick the form whose interpretation matches the question you're asking.
 
 ---
 
 ## Putting It All Together
 
-Here's a complete workflow for running a regression analysis:
+A typical workflow for a regression analysis looks like this:
 
 ```python
-# 1. Load and prepare data
-hotels = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/vienna_hotels.csv")
-hotels = hotels[hotels["accommodation_type"] == "Hotel"]
-hotels = hotels[hotels["price"] <= 600]
+# 1. Load the data
+df = pd.read_csv("../data/wage1.csv")
 
-# 2. Explore the relationship
-sns.scatterplot(data=hotels, x="distance", y="price")
-plt.show()
+# 2. Explore — describe, scatterplots, group means
+df[["wage", "educ", "exper", "tenure"]].describe()
+sns.regplot(data=df, x="educ", y="wage", ci=None)
 
-# 3. Fit the model
-model = smf.ols("price ~ distance", data=hotels).fit()
-print(model.summary())
+# 3. Fit a simple model first
+m1 = smf.ols("wage ~ educ", data=df).fit()
+print(m1.summary())
 
-# 4. Check significance
-# - Look at p-values (< 0.05 is significant)
-# - Look at confidence intervals (shouldn't include 0)
+# 4. Add more predictors
+m2 = smf.ols("wage ~ educ + exper + tenure", data=df).fit()
 
-# 5. Evaluate fit
-# - R-squared tells you how much variation is explained
-# - Check residual distribution
+# 5. Add dummies for categorical variables
+m3 = smf.ols("wage ~ educ + exper + tenure + female", data=df).fit()
 
-# 6. Make predictions
-hotels["predicted"] = model.fittedvalues
-hotels["residual"] = model.resid
+# 6. Use robust standard errors for cross-sectional data
+m3_robust = smf.ols("wage ~ educ + exper + tenure + female", data=df).fit(cov_type="HC3")
 
-# 7. Try alternative specifications
-# - Log transformations
-# - Polynomial terms
-# - Additional control variables
+# 7. Try a log specification for percentage interpretation
+m4 = smf.ols("lwage ~ educ + exper + tenure + female", data=df).fit()
+
+# 8. Compare R-squared / adjusted R-squared, look at residuals,
+#    and think carefully about what each coefficient means
 ```
+
+```{warning}
+**Correlation is not causation.** A statistically significant regression coefficient tells you that two variables move together once others are controlled for — *not* that one causes the other. Our `female` coefficient of -1.81 doesn't prove gender causes lower wages; it could reflect occupational segregation, discrimination, differences in unmeasured experience, or many other factors. Be careful with the language you use when reporting results.
+```
+
+---
+
+## What's Next
+
+Now that you can run a regression and interpret the output, two natural questions follow:
+
+- **"How do I get these results into my dissertation in Word?"** That's exactly what we tackle in the next chapter — Chapter 12 is dedicated to exporting regression tables, summary statistics, and Excel files in a way that survives data updates.
+- **"What if the relationship between x and y isn't a straight line, or the residuals look weird?"** Chapter 13 is a full case study using a hotels dataset, where we work through log transformations, polynomial terms, robust standard errors, and full diagnostic checks end-to-end.
 
 ---
 
@@ -672,288 +575,168 @@ hotels["residual"] = model.resid
 ````{exercise}
 :label: ex11-simple
 
-**Exercise 1: Simple Regression**
+**Exercise 1: A First Regression**
 
-Using the tips dataset from seaborn:
-1. Run a regression predicting `tip` from `total_bill`
-2. What is the coefficient on `total_bill`? Interpret it in words.
-3. What is the R-squared? What does it mean?
-4. If someone has a bill of $30, what tip does the model predict?
+Using the `wage1` dataset:
+
+1. Fit a simple linear regression of `wage` on `tenure`.
+2. What is the coefficient on `tenure`? Interpret it in plain English.
+3. Is the coefficient statistically significant at the 5% level?
+4. What proportion of the variation in wages does `tenure` alone explain?
 ````
 
 ````{solution} ex11-simple
 :class: dropdown
 
 ```python
-import seaborn as sns
+import pandas as pd
 import statsmodels.formula.api as smf
 
-# Load data
-tips = sns.load_dataset("tips")
+df = pd.read_csv("../data/wage1.csv")
 
-# 1. Fit the regression
-model = smf.ols("tip ~ total_bill", data=tips).fit()
-print(model.summary())
+m = smf.ols("wage ~ tenure", data=df).fit()
+print(m.summary())
 
-# 2. Coefficient interpretation
-print(f"\nCoefficient on total_bill: {model.params['total_bill']:.4f}")
-print("Interpretation: For each additional dollar on the bill,")
-print("the tip increases by about $0.105 (about 10.5 cents).")
-
-# 3. R-squared interpretation
-print(f"\nR-squared: {model.rsquared:.3f}")
-print("This means total_bill explains about 45.7% of the variation in tips.")
-
-# 4. Prediction for $30 bill
-predicted_tip = model.params['Intercept'] + model.params['total_bill'] * 30
-print(f"\nPredicted tip for $30 bill: ${predicted_tip:.2f}")
+print(f"\nCoefficient on tenure: {m.params['tenure']:.4f}")
+print(f"P-value: {m.pvalues['tenure']:.4f}")
+print(f"R-squared: {m.rsquared:.4f}")
 ```
 
-```
-                            OLS Regression Results
-==============================================================================
-Dep. Variable:                    tip   R-squared:                       0.457
-==============================================================================
-                 coef    std err          t      P>|t|      [0.025      0.975]
-------------------------------------------------------------------------------
-Intercept      0.9203      0.160      5.761      0.000       0.606       1.235
-total_bill     0.1050      0.007     14.260      0.000       0.091       0.120
-==============================================================================
-
-Coefficient on total_bill: 0.1050
-Interpretation: For each additional dollar on the bill,
-the tip increases by about $0.105 (about 10.5 cents).
-
-R-squared: 0.457
-This means total_bill explains about 45.7% of the variation in tips.
-
-Predicted tip for $30 bill: $4.07
-```
+**Interpretation:** Each additional year with the current employer is associated with about a $0.17/hour increase in wages. The coefficient is highly significant (p < 0.001), but `tenure` alone only explains about 7% of the variation in wages — so there's a lot of other factors at play.
 ````
 
 ````{exercise}
-:label: ex11-log
+:label: ex11-multi
 
-**Exercise 2: Log Transformations**
+**Exercise 2: Multiple Regression and "All Else Equal"**
 
-Using the tips dataset:
-1. Create log-transformed versions of `tip` and `total_bill`
-2. Run a log-log regression: `ln(tip) ~ ln(total_bill)`
-3. Interpret the coefficient as an elasticity
-4. Compare the R-squared to the level-level model
+Using `wage1`:
+
+1. Fit a multiple regression of `wage` on `educ`, `exper`, and `tenure`.
+2. Suppose Alice has 16 years of education, 5 years of experience, and 2 years of tenure. What is her predicted hourly wage?
+3. Suppose Bob has 12 years of education, 25 years of experience, and 10 years of tenure. What is his predicted hourly wage?
+4. Comparing them, what does the multiple regression tell you about which factor matters most for wages in this sample?
 ````
 
-````{solution} ex11-log
+````{solution} ex11-multi
 :class: dropdown
 
 ```python
-import numpy as np
-import seaborn as sns
+import pandas as pd
 import statsmodels.formula.api as smf
 
-tips = sns.load_dataset("tips")
+df = pd.read_csv("../data/wage1.csv")
 
-# 1. Create log variables
-tips["ln_tip"] = np.log(tips["tip"])
-tips["ln_bill"] = np.log(tips["total_bill"])
+m = smf.ols("wage ~ educ + exper + tenure", data=df).fit()
 
-# 2. Run log-log regression
-model_loglog = smf.ols("ln_tip ~ ln_bill", data=tips).fit()
-print(model_loglog.summary())
+# Alice
+alice = (m.params["Intercept"]
+         + m.params["educ"]   * 16
+         + m.params["exper"]  * 5
+         + m.params["tenure"] * 2)
 
-# 3. Interpret elasticity
-elasticity = model_loglog.params['ln_bill']
-print(f"\nElasticity: {elasticity:.4f}")
-print(f"Interpretation: A 1% increase in total bill is associated")
-print(f"with a {elasticity:.2f}% increase in tip.")
-print(f"Since elasticity < 1, tips are 'inelastic' - they increase")
-print(f"by a smaller percentage than the bill increases.")
+# Bob
+bob = (m.params["Intercept"]
+       + m.params["educ"]   * 12
+       + m.params["exper"]  * 25
+       + m.params["tenure"] * 10)
 
-# 4. Compare R-squared
-model_level = smf.ols("tip ~ total_bill", data=tips).fit()
-print(f"\nR-squared comparison:")
-print(f"Level-Level: {model_level.rsquared:.3f}")
-print(f"Log-Log:     {model_loglog.rsquared:.3f}")
+print(f"Predicted wage for Alice: ${alice:.2f}/hour")
+print(f"Predicted wage for Bob:   ${bob:.2f}/hour")
 ```
 
 ```
-==============================================================================
-                 coef    std err          t      P>|t|      [0.025      0.975]
-------------------------------------------------------------------------------
-Intercept     -0.3642      0.138     -2.645      0.009      -0.635      -0.093
-ln_bill        0.6024      0.048     12.616      0.000       0.508       0.697
-==============================================================================
-R-squared: 0.396
-
-Elasticity: 0.6024
-Interpretation: A 1% increase in total bill is associated
-with a 0.60% increase in tip.
-Since elasticity < 1, tips are 'inelastic' - they increase
-by a smaller percentage than the bill increases.
-
-R-squared comparison:
-Level-Level: 0.457
-Log-Log:     0.396
+Predicted wage for Alice: $7.16/hour
+Predicted wage for Bob:   $6.49/hour
 ```
 
-The level-level model actually has a higher R-squared in this case, suggesting the linear relationship fits better than the log-log specification.
+Alice earns slightly more despite having far less experience and tenure, because the coefficient on `educ` (\$0.60/year) is much larger than the coefficient on `exper` (\$0.02/year) or `tenure` (\$0.17/year). In this sample, education has the largest per-unit effect on wages.
 ````
 
 ````{exercise}
-:label: ex11-residuals
+:label: ex11-dummy
 
-**Exercise 3: Analyzing Residuals**
+**Exercise 3: The Gender Wage Gap**
 
-Using the tips dataset and your level-level regression:
-1. Add predicted values and residuals to the dataframe
-2. Find the 5 most "generous" tips (highest positive residuals)
-3. Find the 5 "stingiest" tips (lowest negative residuals)
-4. Create a histogram of the residuals
+Using `wage1`:
+
+1. Fit a regression of `wage` on `female` only.
+2. What does the coefficient on `female` tell you about the **raw** gender wage gap (without controlling for anything else)?
+3. Now fit a regression of `wage` on `educ`, `exper`, `tenure`, and `female`.
+4. How does the coefficient on `female` change once you control for these other variables? Why?
 ````
 
-````{solution} ex11-residuals
+````{solution} ex11-dummy
 :class: dropdown
 
 ```python
-import seaborn as sns
+import pandas as pd
 import statsmodels.formula.api as smf
-import matplotlib.pyplot as plt
 
-tips = sns.load_dataset("tips")
+df = pd.read_csv("../data/wage1.csv")
 
-# Fit model
-model = smf.ols("tip ~ total_bill", data=tips).fit()
+# Raw gap
+m_raw = smf.ols("wage ~ female", data=df).fit()
+print(f"Raw gap (female coef):      {m_raw.params['female']:.3f}")
 
-# 1. Add predictions and residuals
-tips["predicted_tip"] = model.fittedvalues
-tips["residual"] = model.resid
-
-# 2. Most generous (highest positive residuals)
-print("5 Most Generous Tips:")
-print(tips.nlargest(5, "residual")[["total_bill", "tip", "predicted_tip", "residual"]])
-
-# 3. Stingiest (lowest negative residuals)
-print("\n5 Stingiest Tips:")
-print(tips.nsmallest(5, "residual")[["total_bill", "tip", "predicted_tip", "residual"]])
-
-# 4. Histogram of residuals
-plt.figure(figsize=(8, 5))
-sns.histplot(tips["residual"], bins=20, color="steelblue", alpha=0.7)
-plt.axvline(x=0, color="red", linestyle="--")
-plt.xlabel("Residual (Actual - Predicted Tip)")
-plt.ylabel("Count")
-plt.title("Distribution of Tip Prediction Errors")
-plt.show()
+# Controlled gap
+m_ctrl = smf.ols("wage ~ educ + exper + tenure + female", data=df).fit()
+print(f"Controlled gap (female coef): {m_ctrl.params['female']:.3f}")
 ```
 
 ```
-5 Most Generous Tips:
-     total_bill   tip  predicted_tip  residual
-170       50.81 10.00           6.253     3.747
-212       48.33  9.00           5.993     3.007
-59        48.27  6.73           5.987     0.743
-23        39.42  7.58           5.058     2.522
-183       23.17  6.50           3.352     3.148
-
-5 Stingiest Tips:
-     total_bill   tip  predicted_tip  residual
-67        27.28  2.00           3.784    -1.784
-0          1.01  1.00           1.026    -0.026
-111       32.68  1.17           4.350    -3.180
-172        7.25  1.00           1.681    -0.681
-92        13.75  2.00           2.364    -0.364
+Raw gap (female coef):      -2.512
+Controlled gap (female coef): -1.811
 ```
+
+**Interpretation:** Without any controls, women in the sample earn \$2.51/hour less than men on average. Once we control for education, experience, and tenure, the gap shrinks to \$1.81/hour but doesn't disappear. The shrinkage tells us that part of the raw gap is explained by women in the sample having, on average, slightly less experience and tenure — and the remaining \$1.81 is the "unexplained" gap that controlling for those factors cannot account for.
 ````
 
 ````{exercise}
-:label: ex11-polynomial
+:label: ex11-loglevel
 
-**Exercise 4: Polynomial Regression**
+**Exercise 4: Log-Level Wage Equation**
 
-Using the tips dataset:
-1. Create a squared term for `total_bill`
-2. Run a quadratic regression: `tip ~ total_bill + total_bill_sq`
-3. Is the squared term statistically significant?
-4. Plot both the linear and quadratic fits on the same scatter plot
-5. Which model would you prefer and why?
+Using `wage1`:
+
+1. Fit a log-level regression: `lwage ~ educ + exper + tenure + female`.
+2. Multiply the coefficient on `educ` by 100 and interpret it as a percentage return to schooling.
+3. Multiply the coefficient on `female` by 100 and interpret it as a percentage gender wage gap (holding other variables constant).
+4. Compare the R² of this log-level model to the R² of the level-level model with the same predictors. Which has a higher R²?
 ````
 
-````{solution} ex11-polynomial
+````{solution} ex11-loglevel
 :class: dropdown
 
 ```python
-import seaborn as sns
+import pandas as pd
 import statsmodels.formula.api as smf
-import matplotlib.pyplot as plt
-import numpy as np
 
-tips = sns.load_dataset("tips")
+df = pd.read_csv("../data/wage1.csv")
 
-# 1. Create squared term
-tips["total_bill_sq"] = tips["total_bill"] ** 2
+m_log   = smf.ols("lwage ~ educ + exper + tenure + female", data=df).fit()
+m_level = smf.ols("wage  ~ educ + exper + tenure + female", data=df).fit()
 
-# 2. Run quadratic regression
-model_quad = smf.ols("tip ~ total_bill + total_bill_sq", data=tips).fit()
-print(model_quad.summary())
+print(f"Log-level coefficients:")
+print(f"  educ   = {m_log.params['educ']:.4f}  →  {m_log.params['educ']*100:.1f}% per year")
+print(f"  female = {m_log.params['female']:.4f}  →  {m_log.params['female']*100:.1f}% gap")
 
-# 3. Check significance
-print(f"\nSquared term p-value: {model_quad.pvalues['total_bill_sq']:.4f}")
-if model_quad.pvalues['total_bill_sq'] < 0.05:
-    print("The squared term IS statistically significant (p < 0.05)")
-else:
-    print("The squared term is NOT statistically significant (p >= 0.05)")
-
-# 4. Plot both fits
-fig, ax = plt.subplots(figsize=(10, 6))
-
-# Scatter plot
-ax.scatter(tips["total_bill"], tips["tip"], alpha=0.5, label="Actual tips")
-
-# Linear fit
-x_range = np.linspace(tips["total_bill"].min(), tips["total_bill"].max(), 100)
-model_linear = smf.ols("tip ~ total_bill", data=tips).fit()
-y_linear = model_linear.params['Intercept'] + model_linear.params['total_bill'] * x_range
-ax.plot(x_range, y_linear, color="blue", label=f"Linear (R²={model_linear.rsquared:.3f})")
-
-# Quadratic fit
-y_quad = (model_quad.params['Intercept'] +
-          model_quad.params['total_bill'] * x_range +
-          model_quad.params['total_bill_sq'] * x_range**2)
-ax.plot(x_range, y_quad, color="red", linestyle="--", label=f"Quadratic (R²={model_quad.rsquared:.3f})")
-
-ax.set_xlabel("Total Bill ($)")
-ax.set_ylabel("Tip ($)")
-ax.set_title("Linear vs Quadratic Fit")
-ax.legend()
-plt.show()
-
-# 5. Model preference
-print(f"\nR-squared Linear: {model_linear.rsquared:.4f}")
-print(f"R-squared Quadratic: {model_quad.rsquared:.4f}")
-print("\nConclusion: The quadratic term is not significant, and R-squared")
-print("barely improves. The simpler linear model is preferred (parsimony).")
+print(f"\nR-squared (log-level):  {m_log.rsquared:.4f}")
+print(f"R-squared (level-level): {m_level.rsquared:.4f}")
 ```
 
 ```
-==============================================================================
-                 coef    std err          t      P>|t|      [0.025      0.975]
-------------------------------------------------------------------------------
-Intercept      0.5991      0.348      1.723      0.086      -0.086       1.284
-total_bill     0.1341      0.038      3.561      0.000       0.060       0.208
-total_bill_sq -0.0004      0.001     -0.777      0.438      -0.002       0.001
-==============================================================================
+Log-level coefficients:
+  educ   = 0.0875  →  8.7% per year
+  female = -0.3011  →  -30.1% gap
 
-Squared term p-value: 0.4378
-The squared term is NOT statistically significant (p >= 0.05)
+R-squared (log-level):  0.3923
+R-squared (level-level): 0.3635
+```
 
-R-squared Linear: 0.4566
-R-squared Quadratic: 0.4586
+**Interpretation:** Each additional year of education is associated with roughly an 8.7% increase in hourly wage, holding everything else constant. Women in the sample earn about 30% less than men, holding education, experience, and tenure constant. The log-level model has a slightly higher R² (0.392 vs 0.364) — log models often fit wage data better because the spread of wages grows with the level of wages, which is exactly what taking logs accommodates.
 
-Conclusion: The quadratic term is not significant, and R-squared
-barely improves. The simpler linear model is preferred (parsimony).
+```{note}
+The R² from a log model and a level model are technically not directly comparable, because they explain variation in *different* dependent variables (`lwage` vs `wage`). The comparison above is a useful rule of thumb, but in serious applied work you'd use criteria like AIC or out-of-sample fit instead.
 ```
 ````
-
----
-
-*This chapter has been based on the AN7914 Week 12 Python materials, with additional examples and explanations.*

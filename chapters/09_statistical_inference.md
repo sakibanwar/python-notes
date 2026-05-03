@@ -1,3 +1,14 @@
+---
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Statistical Inference
 
 Up to now, we've been **describing** data — calculating means, making plots, filtering rows. That's useful, but it only tells us about the data we have. What if we want to say something about the bigger picture?
@@ -11,6 +22,16 @@ We'll cover three big ideas:
 1. **The normal distribution** — the foundation of most inference
 2. **Confidence intervals** — estimating population parameters with a range
 3. **Hypothesis testing** — deciding whether observed differences are real or just random noise
+
+```{code-cell} ipython3
+:tags: [remove-cell]
+
+# Imports for the plots in this chapter (kept hidden so students aren't
+# distracted by plotting machinery while learning statistics).
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+```
 
 ---
 
@@ -39,13 +60,43 @@ The key properties to remember:
 - About **95%** of values fall within 2 standard deviations
 - About **99.7%** of values fall within 3 standard deviations
 
-This is called the **68-95-99.7 rule** (or the empirical rule). We'll verify this with Python shortly!
+This is called the **68-95-99.7 rule** (or the empirical rule). The picture below makes it intuitive — the bell-shape concentrates almost all the probability within ±3 standard deviations of the mean:
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
+mu, sigma = 0, 1
+x = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
+y = stats.norm.pdf(x, mu, sigma)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(x, y, color='steelblue', linewidth=2)
+ax.fill_between(x, y, where=(x >= mu - sigma) & (x <= mu + sigma),
+                alpha=0.5, color='steelblue', label='68% within ±1σ')
+ax.fill_between(x, y,
+                where=((x >= mu - 2*sigma) & (x < mu - sigma)) | ((x > mu + sigma) & (x <= mu + 2*sigma)),
+                alpha=0.3, color='steelblue', label='95% within ±2σ')
+ax.fill_between(x, y,
+                where=((x >= mu - 3*sigma) & (x < mu - 2*sigma)) | ((x > mu + 2*sigma) & (x <= mu + 3*sigma)),
+                alpha=0.15, color='steelblue', label='99.7% within ±3σ')
+ax.axvline(x=mu, color='red', linestyle='--', alpha=0.7, label='Mean (μ)')
+ax.set_xlabel('Standard deviations from the mean')
+ax.set_ylabel('Density')
+ax.set_title('The 68–95–99.7 Rule for the Normal Distribution')
+ax.set_xticks([-3, -2, -1, 0, 1, 2, 3])
+ax.set_xticklabels(['−3σ', '−2σ', '−1σ', 'μ', '+1σ', '+2σ', '+3σ'])
+ax.legend(loc='upper right')
+plt.tight_layout()
+plt.show()
+```
+
+We'll verify this with Python shortly!
 
 ### Setting Up
 
 Python's `scipy.stats` module provides everything we need for working with distributions:
 
-```python
+```{code-cell} ipython3
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -61,19 +112,16 @@ $$z = \frac{x - \mu}{\sigma}$$
 
 Let's try an example. Suppose exam scores have a mean of 70 and standard deviation of 10. A student scored 85 — how good is that?
 
-```python
+```{code-cell} ipython3
 # What is the z-score for a student who scored 85?
 x = 85
 mu = 70
 sigma = 10
 
 z = (x - mu) / sigma
-print(f"A score of {x} has a z-score of {z}")
+print("A score of ", x, " has a z-score of ", z)
 ```
 
-```
-A score of 85 has a z-score of 1.5
-```
 
 A z-score of 1.5 means the student scored 1.5 standard deviations above the mean. That sounds good, but *how* good exactly? What proportion of students did they beat? That's where `norm.cdf()` comes in.
 
@@ -81,19 +129,38 @@ A z-score of 1.5 means the student scored 1.5 standard deviations above the mean
 
 The **CDF** (Cumulative Distribution Function) answers the question: *What proportion of values fall below a given point?* In Python, we use `stats.norm.cdf()`:
 
-```python
+```{code-cell} ipython3
 # What proportion of students scored below 85?
 prob_below_85 = stats.norm.cdf(85, loc=70, scale=10)
-print(f"Proportion scoring below 85: {prob_below_85:.4f}")
-print(f"That's {prob_below_85 * 100:.1f}% of students")
+print("Proportion scoring below 85: ", round(prob_below_85, 4))
+print("That's ", round(prob_below_85 * 100, 1), "% of students")
 ```
 
-```
-Proportion scoring below 85: 0.9332
-That's 93.3% of students
-```
 
 So our student with a score of 85 did better than about 93% of the class. Not bad!
+
+The picture makes this concrete — `cdf` gives you the **shaded area to the left** of the value:
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
+mu, sigma = 70, 10
+x = np.linspace(40, 100, 400)
+y = stats.norm.pdf(x, mu, sigma)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(x, y, color='steelblue', linewidth=2)
+ax.fill_between(x, y, where=(x <= 85),
+                alpha=0.4, color='steelblue', label='P(X ≤ 85) = 0.9332')
+ax.axvline(x=85, color='red', linestyle='--', alpha=0.7, label='x = 85')
+ax.axvline(x=mu, color='gray', linestyle=':', alpha=0.5, label='Mean (μ = 70)')
+ax.set_xlabel('Exam Score')
+ax.set_ylabel('Density')
+ax.set_title('P(X ≤ 85): the area under the curve to the left of 85')
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
 
 ```{note}
 In `stats.norm.cdf()`, `loc` is the mean (μ) and `scale` is the standard deviation (σ). If you're working with the **standard normal** (μ=0, σ=1), you can just pass the z-score directly: `stats.norm.cdf(1.5)` gives the same answer.
@@ -105,17 +172,13 @@ Here's where beginners often get tripped up. `norm.cdf()` always gives you the a
 
 Since the total area under the curve is 1, you just subtract:
 
-```python
+```{code-cell} ipython3
 # What proportion scored ABOVE 85?
 prob_above_85 = 1 - stats.norm.cdf(85, loc=70, scale=10)
-print(f"Proportion scoring above 85: {prob_above_85:.4f}")
-print(f"That's {prob_above_85 * 100:.1f}% of students")
+print("Proportion scoring above 85: ", round(prob_above_85, 4))
+print("That's ", round(prob_above_85 * 100, 1), "% of students")
 ```
 
-```
-Proportion scoring above 85: 0.0668
-That's 6.7% of students
-```
 
 Only about 6.7% scored above 85 — confirming it's a strong result.
 
@@ -127,17 +190,13 @@ A common mistake is using `norm.cdf()` when you want the area **above** a value.
 
 What if you want the probability of scoring between 60 and 80? Take the area below 80 and subtract the area below 60:
 
-```python
+```{code-cell} ipython3
 # What proportion scored between 60 and 80?
 prob_between = stats.norm.cdf(80, loc=70, scale=10) - stats.norm.cdf(60, loc=70, scale=10)
-print(f"Proportion scoring between 60 and 80: {prob_between:.4f}")
-print(f"That's {prob_between * 100:.1f}% of students")
+print("Proportion scoring between 60 and 80: ", round(prob_between, 4))
+print("That's ", round(prob_between * 100, 1), "% of students")
 ```
 
-```
-Proportion scoring between 60 and 80: 0.6827
-That's 68.3% of students
-```
 
 Wait — 68.3%? That's the 68-95-99.7 rule in action! The range 60 to 80 is exactly 1 standard deviation either side of the mean (70 ± 10), and we've just confirmed that about 68% of values fall in that range.
 
@@ -149,55 +208,52 @@ But sometimes you want to go the other way: "Given a probability, what's the val
 
 That's what `norm.ppf()` does — it's the **inverse** of `cdf()`:
 
-```python
+```{code-cell} ipython3
 # What score do you need to be in the top 10%?
 # Top 10% means 90th percentile
 score_90th = stats.norm.ppf(0.90, loc=70, scale=10)
-print(f"90th percentile score: {score_90th:.1f}")
+print("90th percentile score: ", round(score_90th, 1))
 ```
 
-```
-90th percentile score: 82.8
-```
 
-You'd need to score about 82.8 to be in the top 10%.
+You'd need to score about 82.8 to be in the top 10%. Visually, that's the cutoff line where the **right tail** holds 10% of the area:
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
+mu, sigma = 70, 10
+x_critical = stats.norm.ppf(0.90, loc=mu, scale=sigma)
+x = np.linspace(40, 100, 400)
+y = stats.norm.pdf(x, mu, sigma)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(x, y, color='steelblue', linewidth=2)
+ax.fill_between(x, y, where=(x <= x_critical),
+                alpha=0.3, color='steelblue', label='Bottom 90%')
+ax.fill_between(x, y, where=(x >= x_critical),
+                alpha=0.6, color='crimson', label='Top 10%')
+ax.axvline(x=x_critical, color='crimson', linestyle='--', alpha=0.7,
+           label=f'x = {x_critical:.1f} (90th percentile)')
+ax.set_xlabel('Exam Score')
+ax.set_ylabel('Density')
+ax.set_title('Finding the 90th percentile')
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
 
 Now here's one that will come up again and again in this chapter:
 
-```python
+```{code-cell} ipython3
 # What z-score leaves 2.5% in each tail?
 z_95 = stats.norm.ppf(0.975)  # 0.975 because we want the upper tail for two-sided
-print(f"z* for 95% confidence: {z_95:.4f}")
+print("z* for 95% confidence: ", round(z_95, 4))
 ```
 
-```
-z* for 95% confidence: 1.9600
-```
 
 Why 0.975 and not 0.95? Because for a **two-sided** interval, we split the remaining 5% into two tails (2.5% each). So we need the value that leaves 97.5% below it.
 
 This value — **1.96** — is perhaps the most famous number in statistics. It's the z-score that forms the basis of 95% confidence intervals, and you'll see it everywhere.
-
-### Visualising the Normal Distribution
-
-```python
-# Generate x values
-x = np.linspace(40, 100, 200)
-
-# Calculate the normal distribution PDF
-y = stats.norm.pdf(x, loc=70, scale=10)
-
-# Plot
-plt.figure(figsize=(10, 5))
-plt.plot(x, y, color='blue', linewidth=2)
-plt.fill_between(x, y, where=(x >= 60) & (x <= 80), alpha=0.3, color='blue', label='Within 1 SD (68%)')
-plt.axvline(x=70, color='red', linestyle='--', label='Mean (μ = 70)')
-plt.xlabel('Exam Score')
-plt.ylabel('Density')
-plt.title('Normal Distribution: μ = 70, σ = 10')
-plt.legend()
-plt.show()
-```
 
 ### Summary of Normal Distribution Functions
 
@@ -267,41 +323,39 @@ Let's break this down step by step with an example.
 
 #### Example: Proportion of Premature Births
 
-Suppose in a sample of 1,000 births, 152 were premature. What's the 95% confidence interval for the true proportion?
+We have a sample of 50 babies in `birth_weights_sample.csv`. Each row records the baby's birth weight (in pounds) and a `premature` flag (1 = premature, 0 = full term). Let's load the data and find a 95% confidence interval for the **true population proportion** of premature births.
 
-```python
+```{code-cell} ipython3
+# Load the data
+births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/birth_weights_sample.csv")
+
 # Step 1: Calculate the sample proportion
-n = 1000
-x = 152   # number of premature births
+n = len(births)
+x = births["premature"].sum()
 p_hat = x / n
 
-print(f"Sample proportion: {p_hat:.4f}")
+print("Sample size n =", n)
+print("Number premature x =", x)
+print("Sample proportion:", round(p_hat, 4))
 
 # Step 2: Calculate the standard error
 se = np.sqrt(p_hat * (1 - p_hat) / n)
-print(f"Standard error: {se:.4f}")
+print("Standard error:", round(se, 4))
 
 # Step 3: Find the critical value (z* for 95% confidence)
 z_star = stats.norm.ppf(0.975)
-print(f"z* for 95% confidence: {z_star:.4f}")
+print("z* for 95% confidence:", round(z_star, 4))
 
 # Step 4: Calculate the confidence interval
 lower = p_hat - z_star * se
 upper = p_hat + z_star * se
-print(f"\n95% Confidence Interval: ({lower:.4f}, {upper:.4f})")
-print(f"We are 95% confident the true proportion of premature births")
-print(f"is between {lower:.1%} and {upper:.1%}")
+print("\n95% Confidence Interval: from", round(lower, 4), "to", round(upper, 4))
+print("We are 95% confident the true proportion of premature births")
+print("is between", round(lower * 100, 1), "% and", round(upper * 100, 1), "%")
 ```
 
-```
-Sample proportion: 0.1520
-Standard error: 0.0114
-z* for 95% confidence: 1.9600
 
-95% Confidence Interval: (0.1298, 0.1742)
-We are 95% confident the true proportion of premature births
-is between 13.0% and 17.4%
-```
+Notice how **wide** that interval is — from roughly 6% to 26%. With only 50 observations the standard error is large, so we can't pin the true rate down very precisely. Larger samples produce tighter intervals (the SE has `√n` in the denominator). We'll see this in action with the larger `births_smoking.csv` dataset later in the chapter.
 
 ```{note}
 What does "95% confident" actually mean? It does **not** mean there's a 95% probability the true value is in this particular interval. Instead, it means: if we repeated this study many times and constructed a confidence interval each time, about 95% of those intervals would contain the true population proportion. It's a statement about the **method**, not about any single interval.
@@ -321,7 +375,7 @@ and t* comes from the t-distribution with n-1 degrees of freedom.
 
 #### Example: Average Birth Weight
 
-```python
+```{code-cell} ipython3
 # Birth weights from a sample of 50 babies (in pounds)
 birth_sample = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/birth_weights_sample.csv")
 weights = birth_sample['weight_lbs'].values
@@ -332,29 +386,20 @@ s = weights.std(ddof=1)  # ddof=1 for sample standard deviation
 n = len(weights)
 se = s / np.sqrt(n)
 
-print(f"Sample mean: {x_bar:.3f} lbs")
-print(f"Sample std: {s:.3f}")
-print(f"Standard error: {se:.3f}")
+print("Sample mean: ", round(x_bar, 3), " lbs")
+print("Sample std: ", round(s, 3))
+print("Standard error: ", round(se, 3))
 
 # Step 2: Find the critical value (t* for 95% confidence)
 t_star = stats.t.ppf(0.975, df=n-1)
-print(f"t* for 95% confidence (df={n-1}): {t_star:.4f}")
+print("t* for 95% confidence (df=", n-1, "): ", round(t_star, 4))
 
 # Step 3: Calculate the confidence interval
 lower = x_bar - t_star * se
 upper = x_bar + t_star * se
-print(f"\n95% Confidence Interval: ({lower:.3f}, {upper:.3f})")
+print("\n95% Confidence Interval: (", round(lower, 3), ", ", round(upper, 3), ")")
 ```
 
-```
-Sample mean: 7.052 lbs
-Sample std: 1.447
-Standard error: 0.205
-
-t* for 95% confidence (df=49): 2.0096
-
-95% Confidence Interval: (6.640, 7.463)
-```
 
 ```{tip}
 Notice that we used `ddof=1` when calculating the standard deviation. This gives us the **sample** standard deviation (dividing by n-1). Without `ddof=1`, pandas and numpy divide by n, which gives the **population** standard deviation. For inference, you almost always want `ddof=1`.
@@ -436,70 +481,62 @@ $$SE = \sqrt{\hat{p}_{pool} \times (1 - \hat{p}_{pool}) \times \left(\frac{1}{n_
 
 ### Example: Premature Births and Smoking
 
-Let's work through this step by step. We have data from two groups:
+The `births_smoking.csv` dataset has 1,000 births split into two groups — `nonsmoker` and `smoker` — each with a `premature` flag. To set up the test we need the per-group counts. A single `groupby` does the job:
 
-```python
-# Data from two groups
-# Nonsmokers: 800 births, 110 premature
-# Smokers: 200 births, 42 premature
+```{code-cell} ipython3
+# Load the data
+births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
 
-n1 = 800    # nonsmokers
-x1 = 110    # premature among nonsmokers
+# Get total births and number premature in each group
+counts = births.groupby("habit")["premature"].agg(["sum", "count"])
+print(counts)
+print()
+
+# Pull out the numbers we need
+n1 = counts.loc["nonsmoker", "count"]
+x1 = counts.loc["nonsmoker", "sum"]
+n2 = counts.loc["smoker", "count"]
+x2 = counts.loc["smoker", "sum"]
+
+# Per-group premature rates
 p1 = x1 / n1
-
-n2 = 200    # smokers
-x2 = 42     # premature among smokers
 p2 = x2 / n2
 
-print(f"Nonsmoker premature rate: {p1:.4f} ({p1:.1%})")
-print(f"Smoker premature rate:    {p2:.4f} ({p2:.1%})")
-print(f"Difference: {p2 - p1:.4f}")
+print("Nonsmoker premature rate:", round(p1, 4), "= about", round(p1 * 100, 1), "%")
+print("Smoker premature rate:   ", round(p2, 4), "= about", round(p2 * 100, 1), "%")
+print("Difference:", round(p2 - p1, 4))
 ```
 
-```
-Nonsmoker premature rate: 0.1375 (13.8%)
-Smoker premature rate:    0.2100 (21.0%)
-Difference: 0.0725
-```
 
 So smokers have a 21.0% premature rate compared to 13.8% for nonsmokers — a 7.25 percentage point difference. But is this difference *statistically significant*, or could it just be due to random variation? Let's find out:
 
-```python
+```{code-cell} ipython3
 # Step 1: Calculate pooled proportion
 p_pool = (x1 + x2) / (n1 + n2)
-print(f"Pooled proportion: {p_pool:.4f}")
+print("Pooled proportion: ", round(p_pool, 4))
 
 # Step 2: Calculate standard error
 se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
-print(f"Standard error: {se:.4f}")
+print("Standard error: ", round(se, 4))
 
 # Step 3: Calculate z-statistic
 z_stat = (p1 - p2) / se
-print(f"z-statistic: {z_stat:.4f}")
+print("z-statistic: ", round(z_stat, 4))
 
 # Step 4: Calculate p-value (two-tailed)
 p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-print(f"p-value: {p_value:.4f}")
+print("p-value: ", round(p_value, 4))
 
 # Step 5: Make decision
 alpha = 0.05
 if p_value < alpha:
-    print(f"\nSince p-value ({p_value:.4f}) < α ({alpha}): REJECT H₀")
+    print("\nSince p-value (", round(p_value, 4), ") < α (", alpha, "): REJECT H₀")
     print("There IS a significant difference in premature birth rates.")
 else:
-    print(f"\nSince p-value ({p_value:.4f}) >= α ({alpha}): FAIL TO REJECT H₀")
+    print("\nSince p-value (", round(p_value, 4), ") >= α (", alpha, "): FAIL TO REJECT H₀")
     print("No significant difference in premature birth rates.")
 ```
 
-```
-Pooled proportion: 0.1520
-Standard error: 0.0289
-z-statistic: -2.5103
-p-value: 0.0121
-
-Since p-value (0.0121) < α (0.05): REJECT H₀
-There IS a significant difference in premature birth rates.
-```
 
 Let's make sure we understand what just happened:
 
@@ -514,7 +551,7 @@ Since 1.2% is less than our threshold of 5%, we conclude: the evidence suggests 
 
 You'll likely run this test more than once, so let's wrap it in a function:
 
-```python
+```{code-cell} ipython3
 def z_test_two_proportions(x1, n1, x2, n2, alpha=0.05):
     """
     Two-proportion z-test using the pooled proportion.
@@ -532,16 +569,16 @@ def z_test_two_proportions(x1, n1, x2, n2, alpha=0.05):
     z_stat = (p1 - p2) / se
     p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
 
-    print(f"Group 1: {x1}/{n1} = {p1:.4f}")
-    print(f"Group 2: {x2}/{n2} = {p2:.4f}")
-    print(f"Pooled proportion: {p_pool:.4f}")
-    print(f"z-statistic: {z_stat:.4f}")
-    print(f"p-value: {p_value:.4f}")
+    print("Group 1: ", x1, "/", n1, " = ", round(p1, 4))
+    print("Group 2: ", x2, "/", n2, " = ", round(p2, 4))
+    print("Pooled proportion: ", round(p_pool, 4))
+    print("z-statistic: ", round(z_stat, 4))
+    print("p-value: ", round(p_value, 4))
 
     if p_value < alpha:
-        print(f"\nReject H₀ at α = {alpha}: significant difference")
+        print("\nReject H₀ at α = ", alpha, ": significant difference")
     else:
-        print(f"\nFail to reject H₀ at α = {alpha}: no significant difference")
+        print("\nFail to reject H₀ at α = ", alpha, ": no significant difference")
 
     return z_stat, p_value
 ```
@@ -561,7 +598,7 @@ The z-test compared **proportions**. But what if you want to compare **means** �
 
 The good news: Python has a built-in function for this, so you don't need to calculate everything by hand:
 
-```python
+```{code-cell} ipython3
 from scipy.stats import ttest_ind
 
 # Birth weight data: 800 nonsmokers and 200 smokers
@@ -570,25 +607,20 @@ nonsmoker_weights = births[births['habit'] == 'nonsmoker']['weight_lbs'].values
 smoker_weights = births[births['habit'] == 'smoker']['weight_lbs'].values
 
 # First, let's see the descriptive statistics
-print(f"Nonsmoker mean weight: {nonsmoker_weights.mean():.3f} lbs")
-print(f"Smoker mean weight:    {smoker_weights.mean():.3f} lbs")
-print(f"Difference:            {nonsmoker_weights.mean() - smoker_weights.mean():.3f} lbs")
+print("Nonsmoker mean weight: ", round(nonsmoker_weights.mean(), 3), " lbs")
+print("Smoker mean weight:    ", round(smoker_weights.mean(), 3), " lbs")
+print("Difference:            ", round(nonsmoker_weights.mean() - smoker_weights.mean(), 3), " lbs")
 ```
 
-```
-Nonsmoker mean weight: 7.178 lbs
-Smoker mean weight:    6.678 lbs
-Difference:            0.500 lbs
-```
 
 There's a half-pound difference. Is it statistically significant?
 
-```python
+```{code-cell} ipython3
 # Perform two-sample t-test (Welch's t-test by default)
 t_stat, p_value = ttest_ind(nonsmoker_weights, smoker_weights)
 
-print(f"\nt-statistic: {t_stat:.4f}")
-print(f"p-value: {p_value:.4f}")
+print("\nt-statistic: ", round(t_stat, 4))
+print("p-value: ", round(p_value, 4))
 
 if p_value < 0.05:
     print("\nReject H₀: The difference in birth weights IS statistically significant.")
@@ -596,12 +628,6 @@ else:
     print("\nFail to reject H₀: No significant difference in birth weights.")
 ```
 
-```
-t-statistic: 4.7821
-p-value: 0.0000
-
-Reject H₀: The difference in birth weights IS statistically significant.
-```
 
 The p-value is essentially 0 — the difference is highly significant.
 
@@ -624,7 +650,7 @@ A large absolute t-statistic (far from 0) and small p-value (< 0.05) both point 
 
 In the example above, we had two separate arrays. But in practice, your data will usually be in a DataFrame with a column indicating which group each observation belongs to. How do you split it? Using the filtering skills from Chapter 6:
 
-```python
+```{code-cell} ipython3
 # Create a DataFrame (as you'd typically load from a CSV)
 births = pd.DataFrame({
     'weight': np.concatenate([nonsmoker_weights, smoker_weights]),
@@ -637,14 +663,10 @@ smoker = births[births['habit'] == 'smoker']['weight']
 
 # Run the test
 t_stat, p_value = ttest_ind(nonsmoker, smoker)
-print(f"t-statistic: {t_stat:.4f}")
-print(f"p-value: {p_value:.4f}")
+print("t-statistic: ", round(t_stat, 4))
+print("p-value: ", round(p_value, 4))
 ```
 
-```
-t-statistic: 4.7821
-p-value: 0.0000
-```
 
 Notice how we used the same boolean filtering pattern from Chapter 6 — `births[births['habit'] == 'nonsmoker']` — to split the data into two groups before passing them to `ttest_ind()`. Everything we've learned builds on what came before!
 
@@ -658,21 +680,17 @@ We've been focused on p-values and statistical significance. But here's somethin
 
 Why? Because with a very large sample, even *tiny* differences become statistically significant. Watch what happens:
 
-```python
+```{code-cell} ipython3
 # Large sample with tiny difference — 10,000 observations per group
 stat_practical = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/stat_vs_practical.csv")
 group_1 = stat_practical[stat_practical['group'] == 'Group A']['score'].values
 group_2 = stat_practical[stat_practical['group'] == 'Group B']['score'].values
 
 t_stat, p_value = ttest_ind(group_1, group_2)
-print(f"Difference in means: {group_2.mean() - group_1.mean():.2f}")
-print(f"p-value: {p_value:.6f}")
+print("Difference in means: ", round(group_2.mean() - group_1.mean(), 2))
+print("p-value: ", round(p_value, 6))
 ```
 
-```
-Difference in means: 0.59
-p-value: 0.002814
-```
 
 The result is "significant" (p < 0.05), but the actual difference is only 0.59 points on a scale where the standard deviation is 15. Would you change a business decision based on a difference this tiny? Probably not.
 
@@ -717,15 +735,15 @@ By default, all the tests we've been running are **two-tailed** — they check f
 
 How do you convert? Since `ttest_ind` always returns a two-tailed p-value, you simply divide by 2:
 
-```python
+```{code-cell} ipython3
 # For a one-tailed test, divide the two-tailed p-value by 2
 # (only valid if the observed difference is in the expected direction)
 
 t_stat, p_value_two_tailed = ttest_ind(smoker, nonsmoker)
 p_value_one_tailed = p_value_two_tailed / 2
 
-print(f"Two-tailed p-value: {p_value_two_tailed:.4f}")
-print(f"One-tailed p-value: {p_value_one_tailed:.4f}")
+print("Two-tailed p-value: ", round(p_value_two_tailed, 4))
+print("One-tailed p-value: ", round(p_value_one_tailed, 4))
 ```
 
 ```{warning}
@@ -761,7 +779,7 @@ This table is worth memorising — these mistakes appear in published research p
 
 Let's tie everything together. Here's a reusable function that runs the complete inference workflow — from descriptive statistics through to the test decision. You can use this as a template for your own analyses:
 
-```python
+```{code-cell} ipython3
 def inference_workflow(data, group_col, value_col, alpha=0.05):
     """
     Complete inference workflow for comparing two groups.
@@ -781,30 +799,30 @@ def inference_workflow(data, group_col, value_col, alpha=0.05):
     print("=" * 55)
 
     # Step 1: Descriptive statistics
-    print(f"\n1. DESCRIPTIVE STATISTICS")
-    print(f"   {groups[0]}: n={len(group1)}, mean={group1.mean():.3f}, sd={group1.std():.3f}")
-    print(f"   {groups[1]}: n={len(group2)}, mean={group2.mean():.3f}, sd={group2.std():.3f}")
-    print(f"   Difference: {group1.mean() - group2.mean():.3f}")
+    print("\n1. DESCRIPTIVE STATISTICS")
+    print("   ", groups[0], ": n=", len(group1), ", mean=", round(group1.mean(), 3), ", sd=", round(group1.std(), 3))
+    print("   ", groups[1], ": n=", len(group2), ", mean=", round(group2.mean(), 3), ", sd=", round(group2.std(), 3))
+    print("   Difference: ", round(group1.mean() - group2.mean(), 3))
 
     # Step 2: Hypotheses
-    print(f"\n2. HYPOTHESES")
-    print(f"   H₀: μ_{groups[0]} = μ_{groups[1]}")
-    print(f"   H₁: μ_{groups[0]} ≠ μ_{groups[1]}")
+    print("\n2. HYPOTHESES")
+    print("   H₀: μ_", groups[0], " = μ_", groups[1])
+    print("   H₁: μ_", groups[0], " ≠ μ_", groups[1])
 
     # Step 3: Test
-    print(f"\n3. WELCH'S TWO-SAMPLE t-TEST")
+    print("\n3. WELCH'S TWO-SAMPLE t-TEST")
     t_stat, p_value = ttest_ind(group1, group2)
-    print(f"   t-statistic: {t_stat:.4f}")
-    print(f"   p-value: {p_value:.4f}")
+    print("   t-statistic: ", round(t_stat, 4))
+    print("   p-value: ", round(p_value, 4))
 
     # Step 4: Decision
-    print(f"\n4. DECISION (α = {alpha})")
+    print("\n4. DECISION (α = ", alpha, ")")
     if p_value < alpha:
-        print(f"   p-value ({p_value:.4f}) < α ({alpha}): REJECT H₀")
-        print(f"   There IS a statistically significant difference.")
+        print("   p-value (", round(p_value, 4), ") < α (", alpha, "): REJECT H₀")
+        print("   There IS a statistically significant difference.")
     else:
-        print(f"   p-value ({p_value:.4f}) ≥ α ({alpha}): FAIL TO REJECT H₀")
-        print(f"   No statistically significant difference.")
+        print("   p-value (", round(p_value, 4), ") ≥ α (", alpha, "): FAIL TO REJECT H₀")
+        print("   No statistically significant difference.")
 
     print("=" * 55)
     return t_stat, p_value
@@ -883,19 +901,19 @@ sigma = 7
 
 # 1. Proportion taller than 185 cm
 prop_above_185 = 1 - stats.norm.cdf(185, loc=mu, scale=sigma)
-print(f"1. Proportion taller than 185 cm: {prop_above_185:.4f} ({prop_above_185:.1%})")
+print("1. Proportion taller than 185 cm: ", round(prop_above_185, 4), "= about", round(prop_above_185 * 100, 1), "%")
 
 # 2. Proportion between 168 and 182 cm
 prop_between = stats.norm.cdf(182, loc=mu, scale=sigma) - stats.norm.cdf(168, loc=mu, scale=sigma)
-print(f"2. Proportion between 168 and 182 cm: {prop_between:.4f} ({prop_between:.1%})")
+print("2. Proportion between 168 and 182 cm: ", round(prop_between, 4), "= about", round(prop_between * 100, 1), "%")
 
 # 3. Height for tallest 5% (95th percentile)
 height_95 = stats.norm.ppf(0.95, loc=mu, scale=sigma)
-print(f"3. Tallest 5% threshold: {height_95:.1f} cm")
+print("3. Tallest 5% threshold: ", round(height_95, 1), " cm")
 
 # 4. 25th percentile
 height_25 = stats.norm.ppf(0.25, loc=mu, scale=sigma)
-print(f"4. 25th percentile height: {height_25:.1f} cm")
+print("4. 25th percentile height: ", round(height_25, 1), " cm")
 ```
 
 ```
@@ -931,24 +949,24 @@ x = 320
 p_hat = x / n
 
 # 1. Sample proportion
-print(f"1. Sample proportion: {p_hat:.4f} ({p_hat:.1%})")
+print("1. Sample proportion: ", round(p_hat, 4), "= about", round(p_hat * 100, 1), "%")
 
 # 2. Standard error
 se = np.sqrt(p_hat * (1 - p_hat) / n)
-print(f"2. Standard error: {se:.4f}")
+print("2. Standard error: ", round(se, 4))
 
 # 3. 95% confidence interval
 z_95 = stats.norm.ppf(0.975)
 lower_95 = p_hat - z_95 * se
 upper_95 = p_hat + z_95 * se
-print(f"3. 95% CI: ({lower_95:.4f}, {upper_95:.4f})")
+print("3. 95% CI: (", round(lower_95, 4), ", ", round(upper_95, 4), ")")
 
 # 4. 99% confidence interval
 z_99 = stats.norm.ppf(0.995)
 lower_99 = p_hat - z_99 * se
 upper_99 = p_hat + z_99 * se
-print(f"4. 99% CI: ({lower_99:.4f}, {upper_99:.4f})")
-print(f"   The 99% CI is WIDER — more confidence requires a wider range")
+print("4. 99% CI: (", round(lower_99, 4), ", ", round(upper_99, 4), ")")
+print("   The 99% CI is WIDER — more confidence requires a wider range")
 ```
 
 ```
@@ -997,25 +1015,25 @@ print("   H₁: p_traditional ≠ p_new (there IS a difference)")
 
 # 2. Pooled proportion
 p_pool = (x1 + x2) / (n1 + n2)
-print(f"\n2. Pooled proportion: {p_pool:.4f}")
+print("\n2. Pooled proportion: ", round(p_pool, 4))
 
 # 3. Standard error and z-statistic
 se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
 z_stat = (p1 - p2) / se
-print(f"\n3. Standard error: {se:.4f}")
-print(f"   z-statistic: {z_stat:.4f}")
+print("\n3. Standard error: ", round(se, 4))
+print("   z-statistic: ", round(z_stat, 4))
 
 # 4. p-value and decision
 p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-print(f"\n4. p-value: {p_value:.4f}")
+print("\n4. p-value: ", round(p_value, 4))
 if p_value < 0.05:
     print("   Decision: REJECT H₀ — significant difference in pass rates")
 else:
     print("   Decision: FAIL TO REJECT H₀ — no significant difference")
 
 # 5. Conclusion
-print(f"\n5. The new teaching method had a significantly higher pass rate")
-print(f"   (78% vs 65%, z = {z_stat:.2f}, p = {p_value:.4f}).")
+print("\n5. The new teaching method had a significantly higher pass rate")
+print("   (78% vs 65%, z = ", round(z_stat, 2), ", p = ", round(p_value, 4), ").")
 ```
 
 ```
@@ -1073,32 +1091,32 @@ version_B = ab_test[ab_test['version'] == 'B']['time_on_page_seconds'].values
 
 # 1. Descriptive statistics
 print("1. DESCRIPTIVE STATISTICS")
-print(f"   Version A: n={len(version_A)}, mean={version_A.mean():.1f}s, sd={version_A.std():.1f}s")
-print(f"   Version B: n={len(version_B)}, mean={version_B.mean():.1f}s, sd={version_B.std():.1f}s")
-print(f"   Difference: {version_B.mean() - version_A.mean():.1f}s")
+print("   Version A: n=", len(version_A), ", mean=", round(version_A.mean(), 1), "s, sd=", round(version_A.std(), 1), "s")
+print("   Version B: n=", len(version_B), ", mean=", round(version_B.mean(), 1), "s, sd=", round(version_B.std(), 1), "s")
+print("   Difference: ", round(version_B.mean() - version_A.mean(), 1), "s")
 
 # 2. Two-sample t-test
 t_stat, p_value = ttest_ind(version_A, version_B)
-print(f"\n2. TWO-SAMPLE t-TEST (Welch's)")
-print(f"   t-statistic: {t_stat:.4f}")
-print(f"   p-value: {p_value:.4f}")
+print("\n2. TWO-SAMPLE t-TEST (Welch's)")
+print("   t-statistic: ", round(t_stat, 4))
+print("   p-value: ", round(p_value, 4))
 
 # 3. Decision
-print(f"\n3. DECISION")
+print("\n3. DECISION")
 if p_value < 0.05:
-    print(f"   p-value ({p_value:.4f}) < 0.05: REJECT H₀")
-    print(f"   The difference IS statistically significant.")
+    print("   p-value (", round(p_value, 4), ") < 0.05: REJECT H₀")
+    print("   The difference IS statistically significant.")
 else:
-    print(f"   p-value ({p_value:.4f}) >= 0.05: FAIL TO REJECT H₀")
-    print(f"   The difference is NOT statistically significant.")
+    print("   p-value (", round(p_value, 4), ") >= 0.05: FAIL TO REJECT H₀")
+    print("   The difference is NOT statistically significant.")
 
 # 4. Practical significance
 diff = version_B.mean() - version_A.mean()
-print(f"\n4. PRACTICAL SIGNIFICANCE")
-print(f"   The difference is {diff:.1f} seconds.")
-print(f"   Whether this is practically meaningful depends on context:")
-print(f"   - For an e-commerce site: 15 extra seconds could mean more purchases")
-print(f"   - For a news article: probably not meaningful enough to matter")
+print("\n4. PRACTICAL SIGNIFICANCE")
+print("   The difference is ", round(diff, 1), " seconds.")
+print("   Whether this is practically meaningful depends on context:")
+print("   - For an e-commerce site: 15 extra seconds could mean more purchases")
+print("   - For a news article: probably not meaningful enough to matter")
 ```
 
 ```
@@ -1133,33 +1151,44 @@ The datasets used in this chapter were generated using Python's `numpy.random` m
 
 ### Birth Weights Sample (`birth_weights_sample.csv`)
 
-A sample of 50 baby birth weights (in pounds), drawn from a normal distribution with a mean of 7.0 lbs and standard deviation of 1.5 lbs.
+A sample of 50 babies. Each row records the baby's birth weight (drawn from a normal distribution with mean 7.0 lbs and standard deviation 1.5 lbs) and a `premature` flag (1 = premature, 0 = full term). We deliberately link "premature" to the lower birth weights — in real data, premature babies tend to be smaller than full-term ones.
 
 ```python
 import numpy as np
 import pandas as pd
 
-np.random.seed(42)  # Makes results reproducible
+np.random.seed(42)  # Makes the random weights reproducible
 
+# Generate weights
 weights = pd.DataFrame({
     'weight_lbs': np.random.normal(7.0, 1.5, 50).round(2)
 })
+
+# Mark the 8 lowest-weight babies as premature (16% premature rate)
+weights = weights.sort_values('weight_lbs').reset_index(drop=True)
+weights['premature'] = 0
+weights.loc[:7, 'premature'] = 1     # first 8 rows after sorting
+
+# Shuffle so the rows aren't ordered by weight
+weights = weights.sample(frac=1, random_state=123).reset_index(drop=True)
 
 weights.to_csv('birth_weights_sample.csv', index=False)
 ```
 
 **What's happening:**
-- `np.random.seed(42)` ensures you get the same "random" numbers every time — this is called **reproducibility**
+- `np.random.seed(42)` ensures you get the same "random" weights every time — this is called **reproducibility**
 - `np.random.normal(7.0, 1.5, 50)` draws 50 values from a normal distribution with mean 7.0 and standard deviation 1.5
-- `.round(2)` rounds to 2 decimal places
+- After sorting by weight, the 8 lightest babies are flagged premature — this gives the dataset a realistic correlation between low birth weight and prematurity
+- The final shuffle (with a different `random_state`) mixes the rows back up so the data isn't sorted by weight
 
 ### Births and Smoking (`births_smoking.csv`)
 
-A dataset of 1,000 births — 800 from nonsmoking mothers and 200 from smoking mothers. Nonsmokers' babies have a slightly higher mean birth weight.
+A dataset of 1,000 births — 800 from nonsmoking mothers and 200 from smoking mothers. Each row also has a `premature` flag (1 = premature, 0 = full term). Nonsmokers' babies have a slightly higher mean birth weight, and a slightly lower premature birth rate (13.75% vs 21%).
 
 ```python
 np.random.seed(42)
 
+# Generate weights and habit
 births = pd.DataFrame({
     'weight_lbs': np.concatenate([
         np.random.normal(7.2, 1.3, 800),   # Nonsmokers: mean 7.2 lbs, SD 1.3
@@ -1168,10 +1197,21 @@ births = pd.DataFrame({
     'habit': ['nonsmoker'] * 800 + ['smoker'] * 200
 })
 
+# Add a premature column: 110 of 800 nonsmokers (13.75%), 42 of 200 smokers (21%)
+np.random.seed(42)
+ns_idx = list(births[births['habit'] == 'nonsmoker'].index)
+sm_idx = list(births[births['habit'] == 'smoker'].index)
+np.random.shuffle(ns_idx)
+np.random.shuffle(sm_idx)
+
+births['premature'] = 0
+births.loc[ns_idx[:110], 'premature'] = 1   # 110 random nonsmokers
+births.loc[sm_idx[:42], 'premature'] = 1    # 42 random smokers
+
 births.to_csv('births_smoking.csv', index=False)
 ```
 
-**Why these numbers?** Research consistently shows that babies born to smoking mothers tend to weigh less on average. The 0.5 lb difference and the sample sizes here are inspired by real studies, though the specific values are simulated.
+**Why these numbers?** Research consistently shows that babies born to smoking mothers tend to weigh less on average and be premature more often. The 0.5 lb weight gap, the 13.75% / 21% premature rates and the sample sizes here are inspired by real studies, though the specific values are simulated.
 
 ### Statistical vs Practical Significance (`stat_vs_practical.csv`)
 

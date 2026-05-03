@@ -22,7 +22,11 @@ chapters:
     title: "9. Statistical Inference"
   - file: chapters/10_exploratory_analysis
     title: "10. Exploratory Analysis"
-  - file: chapters/11_regression_stats
+  - file: chapters/11_regression
     title: "11. Introduction to Regression"
-  - file: chapters/12_dashboards
-    title: "12. Creating Dashboards with Streamlit"
+  - file: chapters/12_exporting_results
+    title: "12. Exporting Results to Word and Excel"
+  - file: chapters/13_regression_case_study_stats
+    title: "13. Regression Analysis: A Case Study"
+  - file: chapters/14_dashboards
+    title: "14. Creating Dashboards with Streamlit"

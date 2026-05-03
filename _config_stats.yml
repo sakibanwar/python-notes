@@ -17,8 +17,7 @@ exclude_patterns:
   - intro.md
   - chapters/05_data_viz.md
   - chapters/06_filtering.md
-  - chapters/09_hypothesis_testing.md
-  - chapters/11_regression.md
+  - chapters/13_regression_case_study.md
 
 # Execute notebooks on build to show outputs
 execute:

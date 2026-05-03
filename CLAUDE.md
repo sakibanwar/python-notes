@@ -44,22 +44,34 @@ Match the original notes exactly. The style is:
 
 ```
 python-notes/
-├── _config.yml          # Jupyter Book config
-├── _toc.yml             # Table of contents
-├── intro.md             # Welcome page
+├── _config.yml              # DA Jupyter Book config
+├── _config_stats.yml        # Stats Jupyter Book config
+├── _toc.yml                 # DA table of contents
+├── _toc_stats.yml           # Stats table of contents
+├── intro.md                 # DA welcome page
+├── intro_stats.md           # Stats welcome page
 ├── chapters/
 │   ├── 01_getting_started.md
 │   ├── 02_conditionals.md
 │   ├── 03_data_structures.md
 │   ├── 04_intro_pandas.md
-│   ├── 05_data_viz.md
-│   ├── 06_filtering.md
+│   ├── 05_data_viz.md / 05_data_viz_stats.md
+│   ├── 06_filtering.md / 06_filtering_stats.md
 │   ├── 07_grouping.md
 │   ├── 08_data_cleaning.md
-│   ├── 09_hypothesis_testing.md
+│   ├── 09_statistical_inference.md                  # Shared (was DA-only Hypothesis Testing)
 │   ├── 10_exploratory_analysis.md
-│   ├── 11_regression.md
-│   └── 12_dashboards.md
+│   ├── 11_regression.md                              # Intro to regression (wage1, shared)
+│   ├── 12_exporting_results.md                       # Stargazer / Excel (shared)
+│   ├── 13_regression_case_study.md /
+│   │   13_regression_case_study_stats.md             # Vienna hotels case study
+│   └── 14_dashboards.md                              # Streamlit (shared)
+├── data/
+│   ├── wage1.csv                                     # Wooldridge wage equation data
+│   ├── vienna_hotels.csv                             # for the case study
+│   └── ... (other course datasets)
+├── _scripts/
+│   └── build_data.py                                 # Regenerates Wooldridge CSVs
 ├── _static/
 │   ├── css/custom.css
 │   └── js/exercises.js
@@ -68,20 +80,24 @@ python-notes/
 
 ## Chapter Mapping (PDF → Book)
 
-| Week | PDF Topic | Chapter File |
-|------|-----------|--------------|
+The book is published in two versions sharing most chapters: the **DA** version (Data Analytics / Data Analysis) and the **Stats** version (Quantitative Methods and Statistics). Stats-only files have a `_stats` suffix.
+
+| Ch | Topic | Chapter File(s) |
+|----|-------|-----------------|
 | 1 | Functions and Variables | `01_getting_started.md` |
 | 2 | Conditionals | `02_conditionals.md` |
 | 3 | Data Structures and Loops | `03_data_structures.md` |
-| 4/5 | Intro to Pandas | `04_intro_pandas.md` |
-| 5/6 | Data Viz with Seaborn | `05_data_viz.md` |
-| 6/7 | Filtering Data | `06_filtering.md` |
-| 7/8 | Grouping and Aggregating | `07_grouping.md` |
-| 8/9 | Data Cleaning | `08_data_cleaning.md` |
-| 9/10 | Hypothesis Testing | `09_hypothesis_testing.md` |
+| 4 | Intro to Pandas | `04_intro_pandas.md` |
+| 5 | Data Viz with Seaborn | `05_data_viz.md` (DA) / `05_data_viz_stats.md` (Stats) |
+| 6 | Filtering Data | `06_filtering.md` (DA) / `06_filtering_stats.md` (Stats) |
+| 7 | Grouping and Aggregating | `07_grouping.md` |
+| 8 | Data Cleaning | `08_data_cleaning.md` |
+| 9 | Statistical Inference | `09_statistical_inference.md` (shared) |
 | 10 | Exploratory Analysis | `10_exploratory_analysis.md` |
-| 11 | Intro to Regression | `11_regression.md` |
-| 12 | Streamlit Dashboards | `12_dashboards.md` |
+| 11 | Intro to Regression (wage1) | `11_regression.md` (shared) |
+| 12 | Exporting Results to Word and Excel | `12_exporting_results.md` (shared) |
+| 13 | Regression Analysis: A Case Study (Vienna hotels) | `13_regression_case_study.md` (DA) / `13_regression_case_study_stats.md` (Stats) |
+| 14 | Streamlit Dashboards | `14_dashboards.md` (shared) |
 
 ## Exercise Format
 

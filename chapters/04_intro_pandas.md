@@ -24,10 +24,16 @@ Think of it this way:
 
 ## Installing and Importing Pandas
 
-If you're using Google Colab or Anaconda, pandas is already installed. Otherwise, you can install it with:
+If you're using Google Colab or Anaconda, pandas is already installed — most students won't need to do anything. If you do need to install it (say, on a fresh local Python install), run this **in a code cell**:
 
 ```bash
-pip install pandas
+!pip install pandas
+```
+
+The leading `!` tells Jupyter/Colab to run the command as a shell command rather than as Python.
+
+```{note}
+**Running from a terminal instead?** If you're installing from your computer's command line (outside a notebook), drop the `!` and run `pip install pandas` directly.
 ```
 
 Once installed, we import pandas using a conventional alias:

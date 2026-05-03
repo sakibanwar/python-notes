@@ -176,6 +176,48 @@ plt.show()
 
 The KDE (Kernel Density Estimate) curve shows a smoothed version of the distribution.
 
+## Count Plots
+
+So far we've been visualising **numerical** variables (like total bill amounts). But what if you have a **categorical** variable — like the day of the week or a customer's gender — and you simply want to know: *how many observations are in each category?*
+
+That's where `countplot` comes in.
+
+### Basic Count Plot
+
+Let's see how many observations we have for each day:
+
+```{code-cell} ipython3
+sns.countplot(data=df_tips, x=df_tips['day'])
+plt.show()
+```
+
+Notice that Saturday has the most observations in our dataset, while Friday has the fewest. The function automatically counts the rows for each category — you don't need to calculate anything yourself.
+
+### Adding Colour with Hue
+
+What if we want to break each day down further — say, by gender? We can add the `hue` parameter:
+
+```{code-cell} ipython3
+sns.countplot(data=df_tips, x=df_tips['day'], hue=df_tips['sex'])
+plt.title('Number of Visits by Day and Gender')
+plt.show()
+```
+
+Now we can see how many male and female customers visited on each day. Notice how seaborn automatically creates a legend and uses distinct colours for each group.
+
+### Count Plot vs Bar Plot — What's the Difference?
+
+This is a common point of confusion. Both look like bar charts, so when do you use which?
+
+| Plot | What it shows | When to use it |
+|------|--------------|----------------|
+| `countplot` | **How many** observations in each category | "How many smokers vs nonsmokers?" |
+| `barplot` | The **mean** of a numerical variable per category | "What's the average tip for each day?" |
+
+```{tip}
+Think of it this way: `countplot` counts rows, `barplot` summarises a column. If you're counting, use `countplot`. If you're averaging (or summing), use `barplot`.
+```
+
 ## Bar Plots
 
 A **bar plot** shows the relationship between a categorical variable and a numerical variable. By default, it shows the **mean** of the numerical variable for each category.

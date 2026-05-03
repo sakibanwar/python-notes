@@ -570,6 +570,302 @@ emp
 Always use `.loc` when modifying data based on conditions. Using chained indexing (like `df[condition]['column'] = value`) can cause unexpected behaviour and will generate a warning.
 ```
 
+## Creating New Columns from Existing Data
+
+So far we've been filtering data — selecting rows that match a condition. But what if you need to **create a new variable** from existing ones? This comes up constantly in data analysis. For example:
+
+- "I have price and quantity — I need total revenue."
+- "I have gestation weeks — I need a column that says 'premature' or 'full term'."
+- "I have a continuous variable — I need to bin it into categories."
+
+Let's work through each of these, starting simple and building up.
+
+### Arithmetic Operations
+
+The simplest case: creating a new column from a calculation on existing columns.
+
+```python
+# Create a sample dataset
+orders = pd.DataFrame({
+    'product': ['Widget', 'Gadget', 'Gizmo', 'Widget', 'Gadget'],
+    'price': [10.00, 25.00, 15.00, 10.00, 25.00],
+    'quantity': [5, 2, 8, 3, 6],
+    'discount_pct': [0, 10, 5, 0, 15]
+})
+
+# Create a total column
+orders['total'] = orders['price'] * orders['quantity']
+
+# Create a discount amount column
+orders['discount_amount'] = orders['total'] * orders['discount_pct'] / 100
+
+# Create a final price column
+orders['final_price'] = orders['total'] - orders['discount_amount']
+
+orders
+```
+
+```
+  product  price  quantity  discount_pct  total  discount_amount  final_price
+0  Widget  10.00         5             0   50.0              0.0         50.0
+1  Gadget  25.00         2            10   50.0              5.0         45.0
+2   Gizmo  15.00         8             5  120.0              6.0        114.0
+3  Widget  10.00         3             0   30.0              0.0         30.0
+4  Gadget  25.00         6            15  150.0             22.5        127.5
+```
+
+Notice how each new column is calculated **row by row** automatically — pandas handles the whole column at once without you writing a loop. This is one of the things that makes pandas so powerful.
+
+### Creating Binary Columns from Conditions
+
+Here's where it gets interesting. Remember the boolean conditions we used for filtering? We can store those results as a new column!
+
+Let's say we have birth data and need to flag premature births (less than 37 weeks):
+
+```python
+# Create a dataset of patients
+patients = pd.DataFrame({
+    'patient_id': range(1, 9),
+    'weeks_gestation': [39, 36, 41, 34, 38, 40, 35, 37],
+    'weight_lbs': [7.5, 5.8, 8.2, 5.1, 7.0, 8.0, 5.5, 6.8]
+})
+
+# Create a 'premature' column: True if born before 37 weeks
+patients['premature'] = patients['weeks_gestation'] < 37
+
+patients
+```
+
+```
+   patient_id  weeks_gestation  weight_lbs  premature
+0           1               39         7.5      False
+1           2               36         5.8       True
+2           3               41         8.2      False
+3           4               34         5.1       True
+4           5               38         7.0      False
+5           6               40         8.0      False
+6           7               35         5.5       True
+7           8               37         6.8      False
+```
+
+Notice this is the exact same boolean logic we used for filtering! The condition `patients['weeks_gestation'] < 37` returns `True` or `False` for each row — but instead of using it inside `df[...]` to filter, we're storing it as a new column.
+
+### Creating Categorical Columns with `np.where()`
+
+But what if you don't want `True`/`False` — you want descriptive labels like `'premature'` and `'full term'`? That's where `np.where()` comes in:
+
+```python
+import numpy as np
+
+# Label as 'premature' or 'full term' (string labels instead of True/False)
+patients['term_status'] = np.where(
+    patients['weeks_gestation'] < 37,
+    'premature',     # Value if condition is True
+    'full term'      # Value if condition is False
+)
+
+patients[['patient_id', 'weeks_gestation', 'term_status']]
+```
+
+```
+   patient_id  weeks_gestation term_status
+0           1               39   full term
+1           2               36   premature
+2           3               41   full term
+3           4               34   premature
+4           5               38   full term
+5           6               40   full term
+6           7               35   premature
+7           8               37   full term
+```
+
+Let's break down what `np.where()` does:
+
+1. It evaluates the condition (`weeks_gestation < 37`) for every row
+2. Where the condition is `True`, it assigns `'premature'`
+3. Where the condition is `False`, it assigns `'full term'`
+
+Think of it like an if-else that runs on an entire column at once.
+
+```{tip}
+`np.where(condition, value_if_true, value_if_false)` is much more efficient than looping through rows one at a time. Always prefer it over writing a `for` loop when you have a simple two-way condition.
+```
+
+### Using `.apply()` for More Complex Logic
+
+What if you need **more than two categories**? `np.where()` only handles two outcomes (if/else). For three or more, use `.apply()` with a custom function:
+
+```python
+def categorise_weight(weight):
+    if weight < 5.5:
+        return 'low'
+    elif weight < 7.5:
+        return 'normal'
+    else:
+        return 'high'
+
+patients['weight_category'] = patients['weight_lbs'].apply(categorise_weight)
+patients[['patient_id', 'weight_lbs', 'weight_category']]
+```
+
+```
+   patient_id  weight_lbs weight_category
+0           1         7.5            high
+1           2         5.8          normal
+2           3         8.2            high
+3           4         5.1             low
+4           5         7.0          normal
+5           6         8.0            high
+6           7         5.5          normal
+7           8         6.8          normal
+```
+
+Here's what's happening:
+
+1. We define a function `categorise_weight()` that takes a single weight value and returns a category
+2. `.apply()` calls this function **once for each row** in the column
+3. The results are collected into a new column
+
+```{warning}
+A common mistake is trying to use `np.where()` for three categories by nesting it: `np.where(cond1, 'A', np.where(cond2, 'B', 'C'))`. This works but gets messy fast. Use `.apply()` instead — it's much more readable.
+```
+
+### Quick Summary: Which Method to Use?
+
+| Scenario | Method | Example |
+|----------|--------|---------|
+| Arithmetic on columns | Direct operation | `df['total'] = df['price'] * df['qty']` |
+| Two outcomes (True/False) | Boolean condition | `df['flag'] = df['age'] >= 18` |
+| Two outcomes (custom labels) | `np.where()` | `np.where(df['age'] >= 18, 'adult', 'minor')` |
+| Three or more categories | `.apply()` | Define a function, then `.apply()` it |
+
+## Cross-Tabulation with `pd.crosstab()`
+
+We've seen how to create new columns and filter data. But what if you want to summarise the **relationship between two categorical variables**? For example: "Do smokers have higher rates of premature birth?" or "Is there a difference in pass rates between departments?"
+
+This is where **cross-tabulation** (also called a contingency table) comes in. It counts how many observations fall into each combination of two categories.
+
+### Basic Cross-Tabulation
+
+Let's create a dataset of students and their results:
+
+```python
+students = pd.DataFrame({
+    'name': ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank',
+             'Grace', 'Henry', 'Ivy', 'Jack', 'Kate', 'Leo'],
+    'department': ['Business', 'Business', 'Economics', 'Economics',
+                   'Business', 'Economics', 'Business', 'Economics',
+                   'Business', 'Economics', 'Business', 'Economics'],
+    'result': ['Pass', 'Fail', 'Pass', 'Pass', 'Pass', 'Fail',
+               'Pass', 'Pass', 'Fail', 'Pass', 'Pass', 'Fail']
+})
+
+# Create a cross-tabulation
+pd.crosstab(students['department'], students['result'])
+```
+
+```
+result      Fail  Pass
+department
+Business       2     4
+Economics      2     4
+```
+
+Notice how this gives us a compact summary: 2 Business students failed and 4 passed, and the same for Economics. You could figure this out by filtering repeatedly, but `crosstab` does it in one line.
+
+### Adding Row and Column Totals
+
+What if you also want the totals? Use the `margins` parameter:
+
+```python
+pd.crosstab(students['department'], students['result'], margins=True)
+```
+
+```
+result      Fail  Pass  All
+department
+Business       2     4    6
+Economics      2     4    6
+All            4     8   12
+```
+
+The `All` row and column show the totals. This is the same table format you'll see in probability and statistics textbooks.
+
+### Showing Proportions Instead of Counts
+
+Raw counts are useful, but proportions are often more informative — especially when comparing groups of different sizes. Use the `normalize` parameter:
+
+```python
+# Proportions across each row (each row sums to 1)
+pd.crosstab(students['department'], students['result'], normalize='index')
+```
+
+```
+result          Fail      Pass
+department
+Business    0.333333  0.666667
+Economics   0.333333  0.666667
+```
+
+This shows that 33.3% of students in each department failed. But which `normalize` option should you use? Here's a quick guide:
+
+| `normalize` value | What it does | When to use it |
+|-------------------|-------------|----------------|
+| `'index'` | Each **row** sums to 1 | "What proportion of Business students passed?" |
+| `'columns'` | Each **column** sums to 1 | "Of those who failed, what proportion were Business?" |
+| `'all'` | Entire **table** sums to 1 | "What proportion of all students are Business + Pass?" |
+
+```{warning}
+A common mistake is using the wrong normalisation. If you want to compare rates **across groups** (e.g., "Is the failure rate higher in Economics?"), use `normalize='index'` — this ensures you're comparing like with like, even if the groups have different sizes.
+```
+
+### Putting It Together: A Realistic Example
+
+Let's see how cross-tabulation works with a health dataset. Suppose we want to know: *Is there a relationship between smoking and premature birth?*
+
+First, we need to create the premature variable (using `np.where()` from earlier), then cross-tabulate:
+
+```python
+# Simulated birth data
+births = pd.DataFrame({
+    'habit': ['nonsmoker'] * 8 + ['smoker'] * 4,
+    'weeks': [39, 40, 38, 41, 36, 40, 39, 37, 35, 38, 34, 39]
+})
+
+# Create the premature variable
+births['premature'] = np.where(births['weeks'] < 37, 'premie', 'full term')
+
+# Cross-tabulate habit vs premature status
+pd.crosstab(births['habit'], births['premature'])
+```
+
+```
+premature  full term  premie
+habit
+nonsmoker          6       2
+smoker             2       2
+```
+
+Now let's compare the **rates** rather than just the counts:
+
+```python
+# Show row proportions to compare rates
+pd.crosstab(births['habit'], births['premature'], normalize='index').round(3)
+```
+
+```
+premature  full term  premie
+habit
+nonsmoker      0.750   0.250
+smoker         0.500   0.500
+```
+
+This reveals that 25% of nonsmokers had premature births compared to 50% of smokers — a notable difference. But is this difference *statistically significant* or could it just be due to chance? That's what we'll learn to test in the chapter on statistical inference.
+
+```{note}
+`pd.crosstab()` is especially useful for preparing data for statistical tests. In later chapters, we'll use cross-tabulations to calculate proportions, standard errors, and run hypothesis tests to determine whether differences between groups are real.
+```
+
 ## Practical Example: Analysing Sales Data
 
 Let's apply what we've learned to a more realistic dataset:
