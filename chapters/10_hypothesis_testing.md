@@ -24,8 +24,8 @@ Each of those is a **hypothesis test**. The framework is always the same — we'
 ```{code-cell} ipython3
 :tags: [remove-cell]
 
-# Imports for the plots and code in this chapter (kept hidden so students
-# aren't distracted by plotting machinery while learning statistics).
+# Imports for the plots, tests, and CIs used in this chapter — kept hidden
+# so students see the statistics rather than the plumbing.
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -135,7 +135,7 @@ The simplest hypothesis test asks: *is one group's proportion different from a k
 - **Significance level**: α = 0.05
 ```
 
-### The formula
+### The Formula
 
 For a one-proportion test, the formula is simpler than the two-proportion case — we're just comparing one observed proportion to a hypothesised value:
 
@@ -143,7 +143,7 @@ $$z = \frac{\hat{p} - p_0}{\sqrt{\dfrac{p_0\,(1 - p_0)}{n}}}$$
 
 The numerator is *how far* the sample proportion lands from the hypothesised value. The denominator is the standard error **assuming H₀ is true** — that's why `p_0` (not `p̂`) appears under the square root.
 
-### Example walkthrough
+### Example Walkthrough
 
 **Step 1 — Load the data and compute the sample proportion:**
 
@@ -233,39 +233,34 @@ Notice three things:
 
 ## Hypothesis Test for Two Proportions (Z-Test)
 
-Let's put the framework into practice. One of the most common tests compares proportions between two groups — for example: "Is the proportion of premature births different between smokers and nonsmokers?"
+The next case up: instead of comparing one proportion to a fixed baseline, we compare *two* proportions to each other. Both groups give us their own observed rate (`p̂₁` and `p̂₂`), and we ask whether the gap between them is real or just sampling noise.
 
-### Setting Up the Hypotheses
+```{note}
+**Example: premature births and smoking.** The `births_smoking.csv` dataset has 1,000 births with a `habit` column (`nonsmoker` or `smoker`) and a `premature` flag (`1` = premature, `0` = full term).
 
-First, we write down what we're testing:
+- **Research question**: Does the premature birth rate *differ* between smokers and nonsmokers?
+- **H₀**: p₁ = p₂ (the rates are equal)
+- **H₁**: p₁ ≠ p₂ (the rates differ)
+- **Significance level**: α = 0.05
+```
 
-- **H₀**: p₁ = p₂ (the premature birth rates are the same for both groups)
-- **H₁**: p₁ ≠ p₂ (the rates are different)
-
-### The Pooled Proportion
-
-Here's a concept that trips people up: when testing whether two proportions are equal, we calculate the standard error using the **pooled proportion** — the overall proportion assuming H₀ is true (i.e., treating both groups as one big group):
-
-$$\hat{p}_{pool} = \frac{x_1 + x_2}{n_1 + n_2}$$
-
-Why pool? Because under H₀, there's no difference — so our best estimate of the common proportion combines all the data.
-
-### The Z-Statistic
+### The Formula
 
 The z-statistic measures how many standard errors the observed difference is from zero:
 
 $$z = \frac{\hat{p}_1 - \hat{p}_2}{SE}$$
 
-where:
+The standard error uses the **pooled proportion** — the overall proportion assuming H₀ is true (i.e., treating both groups as one big group):
 
-$$SE = \sqrt{\hat{p}_{pool} \times (1 - \hat{p}_{pool}) \times \left(\frac{1}{n_1} + \frac{1}{n_2}\right)}$$
+$$\hat{p}_{pool} = \frac{x_1 + x_2}{n_1 + n_2} \qquad SE = \sqrt{\hat{p}_{pool}\,(1 - \hat{p}_{pool})\,\left(\frac{1}{n_1} + \frac{1}{n_2}\right)}$$
 
-### Example: Premature Births and Smoking
+Why pool? Because under H₀ there's no real difference between the groups — so our best estimate of the common rate combines all the data. (For confidence intervals we'll *unpool* the SE; we'll see why in Step 4.)
 
-The `births_smoking.csv` dataset has 1,000 births split into two groups — `nonsmoker` and `smoker` — each with a `premature` flag. To set up the test we need the per-group counts. A single `groupby` does the job:
+### Example Walkthrough
+
+**Step 1 — Load the data and compute the per-group proportions.** A single `groupby` gives us the counts and totals we need:
 
 ```{code-cell} ipython3
-# Load the data
 births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
 
 # Get total births and number premature in each group
@@ -285,13 +280,25 @@ p2 = x2 / n2
 
 print("Nonsmoker premature rate:", round(p1, 4), "= about", round(p1 * 100, 1), "%")
 print("Smoker premature rate:   ", round(p2, 4), "= about", round(p2 * 100, 1), "%")
-print("Difference:", round(p2 - p1, 4))
+print("Observed difference (p1 - p2):", round(p1 - p2, 4))
 ```
 
+So smokers have a 21.0% premature rate compared to 13.75% for nonsmokers — a 7.25 percentage-point gap. Is this difference *statistically significant*, or could it be sampling noise?
 
-So smokers have a 21.0% premature rate compared to 13.8% for nonsmokers — a 7.25 percentage-point difference. But is this difference *statistically significant*, or could it just be sampling noise?
+**Step 2 — Check the conditions.** Same success–failure rule as before, but now applied to *each group*. Under H₀ both groups share the pooled proportion `p̂_pool`, so we need at least 10 expected successes and 10 expected failures **in each group**:
 
-**Step 1 — Run the test.** The same `proportions_ztest` function we just used handles two-proportion comparisons too — we just hand it a pair of counts and a pair of sample sizes:
+```{code-cell} ipython3
+p_pool = (x1 + x2) / (n1 + n2)
+
+print("Pooled proportion p̂_pool =", round(p_pool, 4))
+print()
+print("Group 1 (nonsmokers): n1 * p_pool =", round(n1 * p_pool, 1), ", n1 * (1 - p_pool) =", round(n1 * (1 - p_pool), 1))
+print("Group 2 (smokers):    n2 * p_pool =", round(n2 * p_pool, 1), ", n2 * (1 - p_pool) =", round(n2 * (1 - p_pool), 1))
+```
+
+All four expected counts comfortably exceed 10, so the normal approximation is fine.
+
+**Step 3 — Run the z-test.** The same `proportions_ztest` function we used before handles two-proportion comparisons too — we just hand it a *list* of two counts and a *list* of two sample sizes (no `value=` needed; the null is automatically "p₁ = p₂"):
 
 ```{code-cell} ipython3
 z_stat, p_value = proportions_ztest(count=[x1, x2], nobs=[n1, n2], alternative="two-sided")
@@ -300,11 +307,27 @@ print("z-statistic =", round(z_stat, 4))
 print("p-value     =", round(p_value, 4))
 ```
 
-Behind the scenes, `statsmodels` computes exactly the pooled-proportion formula we wrote out above. (You can verify it matches: pooled `p̂ ≈ 0.152`, SE ≈ 0.029, so `z = (0.1375 − 0.21) / 0.029 ≈ −2.55`.)
+A z-statistic of about **−2.55** sits well outside the ±1.96 fail-to-reject region we plotted earlier — already a strong hint we'll reject H₀.
 
-A z-statistic of about **−2.55** is well outside the ±1.96 cutoff we plotted earlier — already a strong hint that we'll reject H₀.
+**Step 4 — Confidence interval for the difference.** The CI uses the **unpooled** SE (because we no longer assume the rates are equal — we want the most honest estimate of the gap):
 
-**Step 2 — Decide.** Compare the p-value to α = 0.05:
+$$SE_{unpooled} = \sqrt{\frac{\hat{p}_1(1 - \hat{p}_1)}{n_1} + \frac{\hat{p}_2(1 - \hat{p}_2)}{n_2}}$$
+
+```{code-cell} ipython3
+diff = p1 - p2
+se_unpooled = np.sqrt(p1*(1 - p1)/n1 + p2*(1 - p2)/n2)
+z_critical = stats.norm.ppf(0.975)   # 1.96 for a 95% CI
+
+ci_lower = diff - z_critical * se_unpooled
+ci_upper = diff + z_critical * se_unpooled
+
+print("95% CI for (p1 - p2): (", round(ci_lower, 4), ",", round(ci_upper, 4), ")")
+print("Does the CI contain 0?", ci_lower <= 0 <= ci_upper)
+```
+
+The CI is roughly **(−0.134, −0.011)** and does **not** contain 0 — that agrees with the test rejecting H₀.
+
+**Step 5 — Decision and conclusion.**
 
 ```{code-cell} ipython3
 alpha = 0.05
@@ -315,9 +338,15 @@ else:
     print("p-value", round(p_value, 4), ">= α", alpha, ": FAIL TO REJECT H₀")
 ```
 
-So we **reject H₀**. In a write-up that would read:
+So we **reject H₀**. Writing it up properly:
 
-> *There is sufficient evidence at the 5% significance level to conclude that the premature birth rate differs between smokers and nonsmokers (z = −2.55, p = 0.011). Smokers in this sample had a higher premature rate (21.0% vs 13.8% for nonsmokers).*
+> *There is sufficient evidence at the 5% significance level to conclude that the premature birth rate differs between smokers and nonsmokers (z = −2.55, p = 0.011, 95% CI for the difference [−0.134, −0.011]). Smokers in this sample had a higher premature rate (21.0% vs 13.75% for nonsmokers).*
+
+Notice three things:
+
+- The **test** and the **CI** agree — the CI excludes 0 if and only if the two-tailed test rejects at α = 0.05.
+- We **pool** for the test (because under H₀ the rates are assumed equal) but **unpool** for the CI (because we want an honest estimate of the gap, not assuming H₀).
+- "Significant" means *real*, not necessarily *important*. A 7.25 percentage-point difference in premature birth rates is also clinically meaningful — but always check that yourself; the test alone won't tell you.
 
 ```{tip}
 **Same function, different argument shape.** `proportions_ztest` recognises a one-proportion test when you pass scalar `count` and `nobs` plus a `value=p_0`, and a two-proportion test when you pass a list of two counts and a list of two sample sizes (no `value` needed — the null is "p₁ = p₂"). The interface is intentionally consistent so you don't need to remember a separate function for each case.
@@ -344,7 +373,7 @@ A *positive* `diff` means **more** activity on the 6th (people stayed home on th
 - **Significance level**: α = 0.05
 ```
 
-### The formula
+### The Formula
 
 For a one-sample t-test, the test statistic is:
 
@@ -357,18 +386,16 @@ Reading top to bottom:
 
 We use the **t-distribution** (not the normal) because we're estimating `σ` from the sample. Degrees of freedom are `n − 1`. As `n` grows, `t*` converges toward `z*` (recall the z-vs-t note from Chapter 9).
 
-### Example walkthrough
+### Example Walkthrough
 
-**Step 1 — Load the data and look at the structure.**
+**Step 1 — Load the data and inspect the differences.**
 
 ```{code-cell} ipython3
 df = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/friday.csv")
 df.head()
 ```
 
-Each row is one paired measurement: a `type` of activity (traffic, shopping, accident), a `date`, the values on the 6th and the 13th, and the `diff`. We'll work directly with the `diff` column.
-
-**Step 2 — Eyeball the summary statistics.**
+Each row is one paired measurement: a `type` of activity (traffic, shopping, accident), a `date`, the values on the 6th and the 13th, and the `diff`. We'll work directly with the `diff` column:
 
 ```{code-cell} ipython3
 diff = df["diff"]
@@ -379,6 +406,14 @@ print("std of diff (ddof=1):", round(diff.std(ddof=1), 2))
 ```
 
 The sample mean is positive (about **+266**), suggesting more activity on the 6th on average. But the standard deviation is enormous (≈849) — could that mean just be noise?
+
+**Step 2 — Check the conditions.** A one-sample t-test is robust when the sample is either roughly normal *or* large enough (n ≥ 30) for the CLT to kick in:
+
+```{code-cell} ipython3
+print("n =", len(diff), "(need >= 30 or roughly normal)")
+```
+
+n = 61 is comfortably above 30 — the test will be fine.
 
 **Step 3 — Run the t-test.** `scipy.stats.ttest_1samp` does the whole calculation in one line. Its arguments:
 
@@ -443,89 +478,114 @@ Notice the parallels with everything we've done so far:
 
 ## Hypothesis Test for Two Means (t-Test)
 
-The one-sample t-test asked whether **one group's mean** differed from a hypothesised value. The natural next step is to compare the means of **two** groups — for example, the average birth weight of smokers' babies vs nonsmokers' babies. That's the **two-sample t-test**.
+The one-sample t-test asked whether **one group's mean** differed from a hypothesised value. The natural next step is to compare the means of **two** independent groups — for example, the average birth weight of smokers' babies vs nonsmokers' babies. That's the **two-sample t-test**.
 
-### Setting Up
+```{note}
+**Example: birth weight and smoking.** Back to `births_smoking.csv`, but this time we use the `weight_lbs` column instead of the `premature` flag. We have 800 nonsmoker babies and 200 smoker babies.
 
-- **H₀**: μ₁ = μ₂ (the mean birth weights are equal)
-- **H₁**: μ₁ ≠ μ₂ (the mean birth weights are different)
-
-### Using `scipy.stats.ttest_ind()`
-
-Python has a built-in function for this, so we don't need to compute the t-statistic by hand. Let's work through it step by step.
-
-**Step 1 — Load the data and split by group.** The dataset is in tidy format: one row per baby, with a `habit` column that tells us the group. Splitting it is just the boolean-filter pattern from Chapter 6:
-
-```{code-cell} ipython3
-from scipy.stats import ttest_ind
-
-births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
-births.head()
+- **Research question**: Does mean birth weight *differ* between nonsmokers' and smokers' babies?
+- **H₀**: μ₁ = μ₂ (the population mean weights are equal)
+- **H₁**: μ₁ ≠ μ₂ (the population mean weights differ)
+- **Significance level**: α = 0.05
 ```
 
+### The Formula
+
+For a two-sample t-test the test statistic is:
+
+$$t = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}}$$
+
+The **numerator** is the observed gap between the two sample means. The **denominator** is the standard error of that gap — each group contributes its own variance divided by its sample size. We use Welch's version, which doesn't assume the two groups have equal variances (the recommended default — see the note below).
+
+### Example Walkthrough
+
+**Step 1 — Load the data and split into the two groups.** The dataset is in tidy format (one row per baby, with a `habit` column), so splitting is just the boolean-filter pattern from Chapter 6:
+
 ```{code-cell} ipython3
-# Split into the two groups using boolean filtering
+births = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/births_smoking.csv")
+
 nonsmoker_weights = births[births['habit'] == 'nonsmoker']['weight_lbs'].values
 smoker_weights    = births[births['habit'] == 'smoker']['weight_lbs'].values
 
-print("Nonsmokers: n =", len(nonsmoker_weights))
-print("Smokers:    n =", len(smoker_weights))
+print("Nonsmokers: n =", len(nonsmoker_weights), ", mean =", round(nonsmoker_weights.mean(), 3), "lbs")
+print("Smokers:    n =", len(smoker_weights),    ", mean =", round(smoker_weights.mean(), 3),    "lbs")
+print("Observed difference:", round(nonsmoker_weights.mean() - smoker_weights.mean(), 3), "lbs")
 ```
 
-**Step 2 — Eyeball the difference.** Before running any test, look at the means:
+There's about a 0.3 lb difference — but is that gap real or just sampling noise?
+
+**Step 2 — Check the conditions.** A two-sample t-test is robust when each sample is either roughly normal *or* large enough (n ≥ 30) for the CLT to kick in:
 
 ```{code-cell} ipython3
-print("Nonsmoker mean weight:", round(nonsmoker_weights.mean(), 3), "lbs")
-print("Smoker mean weight:   ", round(smoker_weights.mean(), 3), "lbs")
-print("Difference:           ", round(nonsmoker_weights.mean() - smoker_weights.mean(), 3), "lbs")
+print("Nonsmokers n =", len(nonsmoker_weights), "(need >= 30 or roughly normal)")
+print("Smokers    n =", len(smoker_weights),    "(need >= 30 or roughly normal)")
 ```
 
-There's about a half-pound difference. The question is whether it's statistically significant.
+Both samples are well above 30 — the test will be fine.
 
-**Step 3 — Run the t-test.** A single function call gives us the t-statistic and the p-value. `stats.ttest_ind` takes:
+**Step 3 — Run the t-test.** `scipy.stats.ttest_ind` (the "ind" stands for *independent* samples) does the whole calculation in one line. Its arguments:
 
 - **two array arguments** — the two samples to compare (order doesn't change the conclusion, only the sign of `t`).
-- **`equal_var`** (optional) — whether to assume the two groups have equal variances. Defaults to `False`, giving **Welch's t-test** — the recommended default. (See the note below.)
+- **`equal_var`** (optional) — whether to assume equal variances. Defaults to `False`, giving **Welch's t-test** (the recommended default — see the note below).
 - **`alternative`** (optional) — `"two-sided"`, `"less"`, or `"greater"`. Defaults to `"two-sided"`.
+
+It returns the **t-statistic** and a **p-value**:
 
 ```{code-cell} ipython3
 t_stat, p_value = ttest_ind(nonsmoker_weights, smoker_weights)
 
-print("t-statistic:", round(t_stat, 4))
-print("p-value:    ", round(p_value, 4))
+print("t-statistic =", round(t_stat, 4))
+print("p-value     =", round(p_value, 6))
 ```
 
-**Step 4 — Decide.** Compare the p-value to α = 0.05:
-
-```{code-cell} ipython3
-alpha = 0.05
-
-if p_value < alpha:
-    print("p-value", round(p_value, 4), "< α", alpha, ": REJECT H₀")
-    print("The difference in birth weights IS statistically significant.")
-else:
-    print("p-value", round(p_value, 4), ">= α", alpha, ": FAIL TO REJECT H₀")
-    print("No significant difference in birth weights.")
-```
-
-The p-value is essentially zero — the difference is highly significant.
+A t-statistic of about **2.87** sits well outside the ±1.96 cutoff. The p-value of about **0.004** says: if there really were no average difference, we'd see a sample gap this large only about 0.4% of the time — well under our α = 0.05 threshold.
 
 ```{note}
 By default, `ttest_ind()` performs **Welch's t-test**, which does NOT assume the two groups have equal variances. This is the recommended default — it's more robust. If you specifically need the pooled (Student's) t-test, use `ttest_ind(a, b, equal_var=True)`, but Welch's is almost always the better choice.
 ```
 
-### Interpreting the Output
+**Step 4 — Confidence interval.** Same `stats.t.interval` we used for the one-sample case, with two changes: the centre is the *difference* in means, and the scale is the *combined* SE. Welch's degrees of freedom has a messy formula, but Python computes it for us in one line:
 
-Two numbers tell the whole story:
+```{code-cell} ipython3
+n1, n2 = len(nonsmoker_weights), len(smoker_weights)
+s1 = nonsmoker_weights.std(ddof=1)
+s2 = smoker_weights.std(ddof=1)
 
-| Output | What it tells you |
-|--------|---------|
-| **t-statistic** | How many standard errors the observed difference is from zero. Bigger = stronger evidence against H₀ |
-| **p-value** | Probability of seeing a difference this large (or larger) if H₀ were true. Smaller = stronger evidence against H₀ |
+diff = nonsmoker_weights.mean() - smoker_weights.mean()
+se = np.sqrt(s1**2/n1 + s2**2/n2)
 
-A large absolute t-statistic (far from 0) and a small p-value (< 0.05) both point to the same conclusion: the difference is unlikely to be due to chance alone.
+# Welch–Satterthwaite degrees of freedom
+df_welch = (s1**2/n1 + s2**2/n2)**2 / ((s1**2/n1)**2/(n1-1) + (s2**2/n2)**2/(n2-1))
 
-Notice that the boolean-filter pattern we used to split `births` into two groups — `births[births['habit'] == 'nonsmoker']` — is exactly the same filtering you learned in Chapter 6. There's no special "split into groups" function for the t-test; it's just the same filtering trick applied before the test.
+ci_lower, ci_upper = stats.t.interval(0.95, df=df_welch, loc=diff, scale=se)
+
+print("Welch's df:", round(df_welch, 1))
+print("95% CI for (μ_nonsmoker - μ_smoker): (", round(ci_lower, 4), ",", round(ci_upper, 4), ") lbs")
+print("Does the CI contain 0?", ci_lower <= 0 <= ci_upper)
+```
+
+The CI is comfortably above zero — the gap between the two group means is positive and well-estimated, which agrees with the test rejecting H₀.
+
+**Step 5 — Decision and conclusion.**
+
+```{code-cell} ipython3
+alpha = 0.05
+
+if p_value < alpha:
+    print("p-value", round(p_value, 6), "< α", alpha, ": REJECT H₀")
+else:
+    print("p-value", round(p_value, 6), ">= α", alpha, ": FAIL TO REJECT H₀")
+```
+
+So we **reject H₀**. The write-up:
+
+> *There is sufficient evidence at the 5% significance level to conclude that mean birth weight differs between nonsmokers' and smokers' babies (t ≈ 2.87, p ≈ 0.004, 95% CI for the mean difference [0.08, 0.52] lbs). Nonsmokers' babies were on average about 0.3 lbs heavier.*
+
+Notice three things:
+
+- The **test** and the **CI** agree — the CI excludes 0 if and only if the two-tailed test rejects at α = 0.05.
+- The boolean-filter pattern we used to split `births` into two groups — `births[births['habit'] == 'nonsmoker']` — is exactly the same filtering you learned in Chapter 6. There's no special "split into groups" function; the t-test just consumes two arrays.
+- A 0.3 lb mean difference isn't just statistically significant — it's also clinically meaningful for neonatal health (roughly 135 grams, enough to matter). That's the kind of side check we'll discuss in the next section.
 
 ---
 
@@ -545,13 +605,13 @@ The fix is the **paired t-test**. And it has a beautiful property: it's actually
 where `diff = reading − writing` for each student. Significance level: α = 0.05.
 ```
 
-### Why "paired" matters
+### Why "Paired" Matters
 
 Each student's reading and writing scores aren't independent — students who score high on one test tend to score high on the other (overall ability, effort, fatigue, exam-taking skill). If we treated reading and writing as two independent samples and ran a two-sample t-test, that within-student correlation would inflate the standard error and make us **less** likely to detect a real difference.
 
 The paired test fixes this by **subtracting within each student first**, then testing whether the average difference is zero. The within-student variability cancels out, giving us a more powerful test.
 
-### The formula
+### The Formula
 
 For each student, compute the difference `dᵢ = readingᵢ − writingᵢ`. Then test whether `μ_d = 0`:
 
@@ -559,18 +619,16 @@ $$t = \frac{\bar{d}}{s_d \,/\, \sqrt{n}}$$
 
 This is **identical** to the one-sample t-test formula from the previous section, just applied to the column of differences.
 
-### Example walkthrough
+### Example Walkthrough
 
-**Step 1 — Load the data and look at the structure.**
+**Step 1 — Load the data and compute the differences.**
 
 ```{code-cell} ipython3
 df = pd.read_csv("https://raw.githubusercontent.com/sakibanwar/python-notes/main/data/reading_writing.csv")
 df.head()
 ```
 
-Each row is one student with their two scores. The pairing is implicit: row 1 is the same student's reading and writing scores.
-
-**Step 2 — Compute the differences and inspect them.**
+Each row is one student with their two scores. The pairing is implicit: row 1 is the same student's reading and writing scores. Take the within-student difference and inspect it:
 
 ```{code-cell} ipython3
 diff = df["reading"] - df["writing"]
@@ -581,6 +639,14 @@ print("std of diff (ddof=1):", round(diff.std(ddof=1), 2))
 ```
 
 The mean difference is about **+2.6**, suggesting students score slightly higher on reading on average. With 200 students and a standard deviation of about 8, is this noise or signal?
+
+**Step 2 — Check the conditions.** Once we collapse to the column of differences, the paired t-test is just a one-sample t-test, so the same condition applies: the differences should be roughly normal *or* the sample should be large enough (n ≥ 30):
+
+```{code-cell} ipython3
+print("n =", len(diff), "(need >= 30 or roughly normal)")
+```
+
+n = 200 is well above 30 — the test will be fine.
 
 **Step 3 — Run the paired t-test.** `scipy.stats.ttest_rel` ("rel" for "related" / paired) takes:
 
@@ -707,7 +773,7 @@ When reporting results, good practice is to state three things:
 
 For example, here's how you might write up our birth weight findings:
 
-> "Nonsmoking mothers had babies weighing on average 0.50 lbs more than smoking mothers (7.18 vs 6.68 lbs). This difference was statistically significant (t = 4.78, p < 0.001). A half-pound difference in birth weight is also clinically meaningful, as it can affect neonatal health outcomes."
+> "Nonsmoking mothers had babies weighing on average about 0.3 lbs more than smoking mothers (7.19 vs 6.89 lbs). This difference was statistically significant (t = 2.87, p = 0.004). A roughly 135-gram gap in birth weight is also clinically meaningful, as it can affect neonatal health outcomes."
 
 Notice how this reports the actual numbers, the statistical test, AND the practical interpretation.
 
@@ -878,7 +944,7 @@ Here's a quick reference for the hypothesis testing tools we built in this chapt
 | **Two-sample t-test** | Comparing means between two independent groups | `stats.ttest_ind(group1, group2)` |
 | **Paired t-test** | Comparing means within paired observations (same subject, before/after) | `stats.ttest_rel(before, after)` |
 
-### Companion CI functions
+### Companion CI Functions
 
 | Test | CI helper |
 |------|-----------|
@@ -906,10 +972,10 @@ Here's a quick reference for the hypothesis testing tools we built in this chapt
 A researcher wants to know if a new teaching method improves pass rates. In the traditional class, 65 out of 100 students passed. In the new method class, 78 out of 100 students passed.
 
 1. State the null and alternative hypotheses
-2. Calculate the pooled proportion
-3. Calculate the standard error and z-statistic
-4. Find the p-value and make a decision at α = 0.05
-5. Write a one-sentence conclusion
+2. Check the success–failure conditions for both groups (using the pooled proportion)
+3. Run a two-proportion z-test using `proportions_ztest`
+4. Build a 95% CI for the difference (`p_traditional − p_new`)
+5. Decide at α = 0.05 and write a one-sentence conclusion
 ````
 
 ````{solution} ex10-z-test-proportions
@@ -918,6 +984,7 @@ A researcher wants to know if a new teaching method improves pass rates. In the 
 ```python
 import numpy as np
 from scipy import stats
+from statsmodels.stats.proportion import proportions_ztest
 
 # Data
 n1 = 100   # traditional class
@@ -933,27 +1000,41 @@ print("1. HYPOTHESES")
 print("   H₀: p_traditional = p_new (no difference in pass rates)")
 print("   H₁: p_traditional ≠ p_new (there IS a difference)")
 
-# 2. Pooled proportion
+# 2. Conditions check (pooled proportion)
 p_pool = (x1 + x2) / (n1 + n2)
-print("\n2. Pooled proportion:", round(p_pool, 4))
+print("\n2. CONDITIONS (need each n*p_pool and n*(1-p_pool) >= 10)")
+print("   pooled p̂_pool =", round(p_pool, 4))
+print("   Group 1: n1 * p_pool =", round(n1 * p_pool, 1),
+      ", n1 * (1 - p_pool) =", round(n1 * (1 - p_pool), 1))
+print("   Group 2: n2 * p_pool =", round(n2 * p_pool, 1),
+      ", n2 * (1 - p_pool) =", round(n2 * (1 - p_pool), 1))
 
-# 3. Standard error and z-statistic
-se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
-z_stat = (p1 - p2) / se
-print("\n3. Standard error:", round(se, 4))
-print("   z-statistic:", round(z_stat, 4))
+# 3. Run the z-test
+z_stat, p_value = proportions_ztest(count=[x1, x2], nobs=[n1, n2], alternative="two-sided")
+print("\n3. TWO-PROPORTION Z-TEST")
+print("   z-statistic =", round(z_stat, 4))
+print("   p-value     =", round(p_value, 4))
 
-# 4. p-value and decision
-p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-print("\n4. p-value:", round(p_value, 4))
+# 4. 95% CI for the difference (unpooled SE)
+diff = p1 - p2
+se_unpooled = np.sqrt(p1*(1 - p1)/n1 + p2*(1 - p2)/n2)
+z_crit = stats.norm.ppf(0.975)
+ci_lower = diff - z_crit * se_unpooled
+ci_upper = diff + z_crit * se_unpooled
+print("\n4. 95% CI for (p_traditional - p_new): (",
+      round(ci_lower, 4), ",", round(ci_upper, 4), ")")
+print("   Contains 0?", ci_lower <= 0 <= ci_upper)
+
+# 5. Decision and conclusion
+print("\n5. DECISION")
 if p_value < 0.05:
-    print("   Decision: REJECT H₀ — significant difference in pass rates")
+    print("   p-value (", round(p_value, 4), ") < 0.05: REJECT H₀")
 else:
-    print("   Decision: FAIL TO REJECT H₀ — no significant difference")
-
-# 5. Conclusion
-print("\n5. The new teaching method had a significantly higher pass rate")
-print("   (78% vs 65%, z = ", round(z_stat, 2), ", p = ", round(p_value, 4), ").")
+    print("   p-value (", round(p_value, 4), ") >= 0.05: FAIL TO REJECT H₀")
+print("\n   Conclusion: There is sufficient evidence at the 5% level to conclude")
+print("   that pass rates differ between the two methods (z =", round(z_stat, 2),
+      ", p =", round(p_value, 4), ").")
+print("   The new method had a higher pass rate (78% vs 65%).")
 ```
 
 ```
@@ -961,16 +1042,24 @@ print("   (78% vs 65%, z = ", round(z_stat, 2), ", p = ", round(p_value, 4), ").
    H₀: p_traditional = p_new (no difference in pass rates)
    H₁: p_traditional ≠ p_new (there IS a difference)
 
-2. Pooled proportion: 0.7150
+2. CONDITIONS (need each n*p_pool and n*(1-p_pool) >= 10)
+   pooled p̂_pool = 0.715
+   Group 1: n1 * p_pool = 71.5 , n1 * (1 - p_pool) = 28.5
+   Group 2: n2 * p_pool = 71.5 , n2 * (1 - p_pool) = 28.5
 
-3. Standard error: 0.0639
-   z-statistic: -2.0344
+3. TWO-PROPORTION Z-TEST
+   z-statistic = -2.0344
+   p-value     = 0.0419
 
-4. p-value: 0.0419
-   Decision: REJECT H₀ — significant difference in pass rates
+4. 95% CI for (p_traditional - p_new): ( -0.2552 , -0.0048 )
+   Contains 0? False
 
-5. The new teaching method had a significantly higher pass rate
-   (78% vs 65%, z = -2.03, p = 0.0419).
+5. DECISION
+   p-value ( 0.0419 ) < 0.05: REJECT H₀
+
+   Conclusion: There is sufficient evidence at the 5% level to conclude
+   that pass rates differ between the two methods (z = -2.03 , p = 0.0419 ).
+   The new method had a higher pass rate (78% vs 65%).
 ```
 ````
 
